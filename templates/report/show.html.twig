@@ -1,0 +1,58 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Signalement #{{ report.id }}{% endblock %}
+
+{% block body %}
+    <div class="page-intro">
+        <h1 class="page-title">Signalement #{{ report.id }}</h1>
+    </div>
+
+    <div class="table-wrap">
+        <table class="table">
+            <tbody>
+                <tr>
+                    <th>Id</th>
+                    <td>{{ report.id }}</td>
+                </tr>
+                <tr>
+                    <th>Description</th>
+                    <td>{{ report.description }}</td>
+                </tr>
+                <tr>
+                    <th>Gravité</th>
+                    <td>{{ report.severity }}</td>
+                </tr>
+                <tr>
+                    <th>Catégorie</th>
+                    <td>{{ report.category }}</td>
+                </tr>
+                <tr>
+                    <th>Conducteur</th>
+                    <td>{{ report.driver ? '#' ~ report.driver.id : '—' }}</td>
+                </tr>
+                <tr>
+                    <th>Bus</th>
+                    <td>{{ report.bus ? '#' ~ report.bus.id : '—' }}</td>
+                </tr>
+                <tr>
+                    <th>Date du fait</th>
+                    <td>{{ report.reportDate ? report.reportDate|date('d/m/Y H:i T') : '—' }}</td>
+                </tr>
+                <tr>
+                    <th>Créé le</th>
+                    <td>{{ report.createdAt ? report.createdAt|date('d/m/Y H:i T') : '—' }}</td>
+                </tr>
+                <tr>
+                    <th>Contact déclarant</th>
+                    <td><pre class="mb-0" style="margin:0; white-space:pre-wrap; font:inherit;">{{ report.reporterContact|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="stack-actions">
+        <a href="{{ path('app_report_index') }}" class="btn btn--secondary">Liste des signalements</a>
+        <a href="{{ path('app_report_edit', {'id': report.id}) }}" class="btn">Modifier</a>
+        {{ include('report/_delete_form.html.twig') }}
+    </div>
+{% endblock %}

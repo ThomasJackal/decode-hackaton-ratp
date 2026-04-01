@@ -1,0 +1,1280 @@
+{% extends 'base.html.twig' %}
+{% block title %}Signalement RATP{% endblock %}
+{% block body %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signalement RATP</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ratp-blue: #003189;
+    --ratp-red: #E3001B;
+    --ratp-light: #F0F4FF;
+    --ratp-dark: #0A1628;
+    --ratp-gray: #6B7280;
+    --ratp-border: #E2E8F0;
+    --ratp-success: #10B981;
+    --ratp-warning: #F59E0B;
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow: 0 4px 24px rgba(0,49,137,0.10);
+    --shadow-lg: 0 8px 40px rgba(0,49,137,0.15);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-body);
+    background: #F7F9FF;
+    min-height: 100vh;
+    color: var(--ratp-dark);
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--ratp-blue);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .header-logo {
+    width: 48px; height: 48px;
+    background: white;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 14px;
+    color: var(--ratp-blue);
+    letter-spacing: -0.5px;
+  }
+  .header-title {
+    color: white;
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .header-subtitle {
+    color: rgba(255,255,255,0.65);
+    font-size: 13px;
+    font-weight: 300;
+    margin-top: 2px;
+  }
+
+  /* MAIN CONTAINER */
+  .container {
+    max-width: 680px;
+    margin: 32px auto;
+    padding: 0 16px 80px;
+  }
+
+  /* INTRO */
+  .intro {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .intro h1 {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--ratp-blue);
+    margin-bottom: 8px;
+  }
+  .intro p {
+    color: var(--ratp-gray);
+    font-size: 15px;
+    font-weight: 300;
+    line-height: 1.6;
+  }
+
+  /* TABS */
+  .tabs-wrapper {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+  }
+  .tabs-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    border-bottom: 2px solid var(--ratp-border);
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    padding: 18px 12px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ratp-gray);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    position: relative;
+  }
+  .tab-btn .tab-icon {
+    font-size: 22px;
+    line-height: 1;
+  }
+  .tab-btn.active {
+    color: var(--ratp-blue);
+    border-bottom-color: var(--ratp-blue);
+    font-weight: 600;
+  }
+  .tab-btn:hover:not(.active) {
+    background: var(--ratp-light);
+    color: var(--ratp-blue);
+  }
+  .tab-badge {
+    background: var(--ratp-red);
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 20px;
+    position: absolute;
+    top: 8px;
+    right: 12px;
+  }
+
+  /* TAB CONTENT */
+  .tab-content { display: none; padding: 28px 24px 32px; }
+  .tab-content.active { display: block; }
+
+  /* FORM ELEMENTS */
+  .form-section {
+    margin-bottom: 24px;
+  }
+  .form-section-title {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ratp-blue);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .form-section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--ratp-border);
+  }
+
+  .field {
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ratp-dark);
+    margin-bottom: 6px;
+  }
+  .field label span.required {
+    color: var(--ratp-red);
+    margin-left: 2px;
+  }
+
+  .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .input-wrap input,
+  .input-wrap select,
+  .input-wrap textarea {
+    width: 100%;
+    padding: 12px 48px 12px 16px;
+    border: 1.5px solid var(--ratp-border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 15px;
+    color: var(--ratp-dark);
+    background: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    appearance: none;
+  }
+  .input-wrap textarea {
+    padding: 12px 48px 12px 16px;
+    resize: vertical;
+    min-height: 110px;
+  }
+  .input-wrap input:focus,
+  .input-wrap select:focus,
+  .input-wrap textarea:focus {
+    border-color: var(--ratp-blue);
+    box-shadow: 0 0 0 3px rgba(0,49,137,0.08);
+  }
+  .input-wrap input::placeholder,
+  .input-wrap textarea::placeholder {
+    color: #B0B8C8;
+    font-weight: 300;
+  }
+  .input-wrap input:disabled {
+    background: #F8FAFC;
+    color: var(--ratp-gray);
+  }
+
+  /* VOCAL BUTTON */
+  .btn-vocal {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 32px; height: 32px;
+    border: none;
+    background: var(--ratp-light);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    transition: all 0.2s;
+    color: var(--ratp-blue);
+    flex-shrink: 0;
+  }
+  .btn-vocal:hover { background: var(--ratp-blue); color: white; }
+  .btn-vocal.recording {
+    background: var(--ratp-red);
+    color: white;
+    animation: pulse-rec 1s infinite;
+  }
+  @keyframes pulse-rec {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(227,0,27,0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(227,0,27,0); }
+  }
+
+  /* AUTOCOMPLETE DROPDOWN */
+  .autocomplete-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: white;
+    border: 1.5px solid var(--ratp-blue);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lg);
+    z-index: 100;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+  }
+  .autocomplete-list.open { display: block; }
+  .autocomplete-item {
+    padding: 11px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    border-bottom: 1px solid var(--ratp-border);
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .autocomplete-item:last-child { border-bottom: none; }
+  .autocomplete-item:hover, .autocomplete-item.selected { background: var(--ratp-light); }
+  .autocomplete-item .item-icon {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    background: var(--ratp-blue);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* FIND BUS BUTTON */
+  .btn-find {
+    width: 100%;
+    padding: 14px;
+    background: var(--ratp-blue);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.2s;
+    margin-top: 8px;
+  }
+  .btn-find:hover { background: #002070; transform: translateY(-1px); box-shadow: var(--shadow); }
+  .btn-find:disabled { background: #B0B8C8; cursor: not-allowed; transform: none; }
+
+  /* BUS FOUND CARD */
+  .bus-found-card {
+    background: linear-gradient(135deg, #003189 0%, #0052CC 100%);
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    color: white;
+    margin-bottom: 20px;
+    display: none;
+    animation: slideIn 0.3s ease;
+  }
+  .bus-found-card.visible { display: flex; align-items: center; gap: 16px; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .bus-found-icon {
+    width: 48px; height: 48px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+  .bus-found-info { flex: 1; }
+  .bus-found-info strong {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .bus-found-info small {
+    font-size: 12px;
+    opacity: 0.75;
+    font-weight: 300;
+  }
+  .bus-found-check {
+    font-size: 24px;
+  }
+
+  /* BUS NOT FOUND */
+  .bus-error {
+    background: #FFF0F0;
+    border: 1.5px solid #FFB3B3;
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    color: var(--ratp-red);
+    font-size: 14px;
+    display: none;
+    margin-top: 8px;
+  }
+  .bus-error.visible { display: block; }
+
+  /* LANG SELECTOR */
+  .lang-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .lang-btn {
+    padding: 6px 14px;
+    border: 1.5px solid var(--ratp-border);
+    border-radius: 20px;
+    background: white;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--font-body);
+    color: var(--ratp-gray);
+  }
+  .lang-btn.active {
+    border-color: var(--ratp-blue);
+    background: var(--ratp-blue);
+    color: white;
+    font-weight: 500;
+  }
+
+  /* VOCAL STATUS */
+  .vocal-status {
+    background: #FFF5F5;
+    border: 1.5px solid #FFB3B3;
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--ratp-red);
+    margin-top: 8px;
+    display: none;
+    align-items: center;
+    gap: 8px;
+  }
+  .vocal-status.active { display: flex; }
+  .vocal-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--ratp-red);
+    animation: pulse-rec 1s infinite;
+    flex-shrink: 0;
+  }
+
+  /* SUBMIT BUTTON */
+  .btn-submit {
+    width: 100%;
+    padding: 16px;
+    background: var(--ratp-red);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.2s;
+    margin-top: 24px;
+    letter-spacing: 0.3px;
+  }
+  .btn-submit:hover { background: #C0000F; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(227,0,27,0.3); }
+  .btn-submit:disabled { background: #B0B8C8; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* QR ONGLET */
+  .qr-prefilled {
+    background: var(--ratp-light);
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    border: 1.5px solid rgba(0,49,137,0.12);
+  }
+  .qr-prefilled-title {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ratp-blue);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .qr-prefilled-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .qr-info-item {
+    background: white;
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .qr-info-label {
+    font-size: 11px;
+    color: var(--ratp-gray);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 3px;
+  }
+  .qr-info-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ratp-blue);
+  }
+
+  /* ONGLET APPEL */
+  .call-card {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .call-number-display {
+    font-family: var(--font-display);
+    font-size: 42px;
+    font-weight: 800;
+    color: var(--ratp-blue);
+    letter-spacing: -1px;
+    margin: 20px 0 8px;
+  }
+  .call-icon-big {
+    width: 80px; height: 80px;
+    background: var(--ratp-light);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px;
+    margin: 0 auto 8px;
+  }
+  .call-hours {
+    background: var(--ratp-light);
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    margin: 20px 0;
+    text-align: left;
+  }
+  .call-hours-title {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 10px;
+    color: var(--ratp-blue);
+  }
+  .call-hours-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--ratp-border);
+    color: var(--ratp-dark);
+  }
+  .call-hours-row:last-child { border-bottom: none; }
+  .call-hours-row span:last-child { font-weight: 500; color: var(--ratp-blue); }
+  .btn-call {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 32px;
+    background: var(--ratp-success);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+    margin-top: 8px;
+  }
+  .btn-call:hover { background: #059669; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(16,185,129,0.3); }
+  .call-note {
+    font-size: 12px;
+    color: var(--ratp-gray);
+    margin-top: 16px;
+    font-weight: 300;
+    line-height: 1.6;
+  }
+
+  /* STEP INDICATOR */
+  .steps {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 28px;
+  }
+  .step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    position: relative;
+  }
+  .step::after {
+    content: '';
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: var(--ratp-border);
+    z-index: 0;
+  }
+  .step:last-child::after { display: none; }
+  .step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--ratp-border);
+    color: var(--ratp-gray);
+    font-size: 12px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    z-index: 1;
+    transition: all 0.3s;
+  }
+  .step.done .step-num { background: var(--ratp-success); color: white; }
+  .step.active .step-num { background: var(--ratp-blue); color: white; }
+  .step-label {
+    font-size: 11px;
+    color: var(--ratp-gray);
+    font-weight: 500;
+    text-align: center;
+  }
+  .step.active .step-label { color: var(--ratp-blue); font-weight: 600; }
+
+  /* SECTION BLOQUÉE */
+  .section-locked {
+    opacity: 0.4;
+    pointer-events: none;
+    filter: blur(0.5px);
+    transition: all 0.3s;
+  }
+  .section-locked.unlocked {
+    opacity: 1;
+    pointer-events: all;
+    filter: none;
+  }
+
+  @media (max-width: 480px) {
+    .tab-btn { font-size: 11px; padding: 14px 6px; }
+    .tab-btn .tab-icon { font-size: 18px; }
+    .call-number-display { font-size: 32px; }
+    .qr-prefilled-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-logo">RATP</div>
+  <div>
+    <div class="header-title">Signalement voyageur</div>
+    <div class="header-subtitle">Votre retour compte — réponse sous 48h</div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="intro">
+    <h1>Faites votre signalement</h1>
+    <p>Choisissez la méthode qui vous convient le mieux.<br>Toutes vos informations sont traitées de façon confidentielle.</p>
+  </div>
+
+  <div class="tabs-wrapper">
+
+    <!-- NAVIGATION ONGLETS -->
+    <div class="tabs-nav">
+      <button class="tab-btn active" onclick="switchTab('manual')">
+        <span class="tab-icon">📝</span>
+        Formulaire
+      </button>
+      <button class="tab-btn" onclick="switchTab('qr')">
+        <span class="tab-icon">📱</span>
+        QR Code
+        <span class="tab-badge">RAPIDE</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('call')">
+        <span class="tab-icon">📞</span>
+        Nous appeler
+      </button>
+    </div>
+
+    <!-- ======================================= -->
+    <!-- ONGLET 1 : FORMULAIRE MANUEL            -->
+    <!-- ======================================= -->
+    <div id="tab-manual" class="tab-content active">
+
+      <!-- INDICATEUR D'ÉTAPES -->
+      <div class="steps" id="steps-manual">
+        <div class="step active" id="step1"><div class="step-num">1</div><div class="step-label">Bus</div></div>
+        <div class="step" id="step2"><div class="step-num">2</div><div class="step-label">Horaire</div></div>
+        <div class="step" id="step3"><div class="step-num">3</div><div class="step-label">Description</div></div>
+        <div class="step" id="step4"><div class="step-num">4</div><div class="step-label">Envoi</div></div>
+      </div>
+
+      <!-- SÉLECTEUR DE LANGUE -->
+      <div class="form-section">
+        <div class="form-section-title">🌍 Langue / Language</div>
+        <div class="lang-bar" id="lang-bar">
+          <button class="lang-btn active" onclick="setLang('fr', this)">🇫🇷 Français</button>
+          <button class="lang-btn" onclick="setLang('en', this)">🇬🇧 English</button>
+          <button class="lang-btn" onclick="setLang('ar', this)">🇩🇿 العربية</button>
+          <button class="lang-btn" onclick="setLang('es', this)">🇪🇸 Español</button>
+          <button class="lang-btn" onclick="setLang('zh', this)">🇨🇳 中文</button>
+        </div>
+      </div>
+
+      <!-- BLOC BUS -->
+      <div class="form-section">
+        <div class="form-section-title">🚌 Identifier le bus</div>
+
+        <div class="field">
+          <label>Ligne <span class="required">*</span></label>
+          <div class="input-wrap" style="position:relative;">
+            <input type="text" id="input-ligne" placeholder="Ex: 42, 91, B..." autocomplete="off" oninput="searchLigne(this.value)">
+            <button class="btn-vocal" onclick="startVocal('input-ligne', 'Dites le numéro de ligne')" title="Saisie vocale">🎙️</button>
+            <div class="autocomplete-list" id="list-ligne"></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Direction <span class="required">*</span></label>
+          <div class="input-wrap" style="position:relative;">
+            <input type="text" id="input-direction" placeholder="Ex: Gare du Nord, Châtelet..." autocomplete="off" oninput="searchDirection(this.value)" disabled>
+            <button class="btn-vocal" onclick="startVocal('input-direction', 'Dites la direction')" title="Saisie vocale">🎙️</button>
+            <div class="autocomplete-list" id="list-direction"></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Arrêt <span class="required">*</span></label>
+          <div class="input-wrap" style="position:relative;">
+            <input type="text" id="input-arret" placeholder="Ex: Opéra, République..." autocomplete="off" oninput="searchArret(this.value)" disabled>
+            <button class="btn-vocal" onclick="startVocal('input-arret', 'Dites le nom de l arrêt')" title="Saisie vocale">🎙️</button>
+            <div class="autocomplete-list" id="list-arret"></div>
+          </div>
+        </div>
+
+        <button class="btn-find" id="btn-find-bus" onclick="findBus()" disabled>
+          🔍 Trouver le bus
+        </button>
+
+        <!-- BUS TROUVÉ -->
+        <div class="bus-found-card" id="bus-found-card">
+          <div class="bus-found-icon">🚌</div>
+          <div class="bus-found-info">
+            <strong id="bus-found-title">Bus trouvé !</strong>
+            <small id="bus-found-detail">Ligne — Direction</small>
+          </div>
+          <div class="bus-found-check">✅</div>
+        </div>
+
+        <!-- BUS NON TROUVÉ -->
+        <div class="bus-error" id="bus-error">
+          ❌ Aucun bus trouvé pour ces paramètres. Vérifiez la ligne, la direction et l'arrêt.
+        </div>
+      </div>
+
+      <!-- BLOC HORAIRE (verrouillé jusqu'au bus trouvé) -->
+      <div class="form-section section-locked" id="section-horaire">
+        <div class="form-section-title">🕐 Horaire de l'incident</div>
+        <div class="field">
+          <label>Date et heure <span class="required">*</span></label>
+          <div class="input-wrap">
+            <input type="datetime-local" id="input-datetime" onchange="updateStep(2)">
+            <button class="btn-vocal" onclick="startVocal('input-datetime', 'Dites la date et heure')" title="Saisie vocale">🎙️</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BLOC DESCRIPTION (verrouillé) -->
+      <div class="form-section section-locked" id="section-description">
+        <div class="form-section-title">💬 Votre signalement</div>
+
+        <div class="field">
+          <label>Description <span class="required">*</span></label>
+          <div class="input-wrap">
+            <textarea id="input-description" placeholder="Décrivez ce qui s'est passé avec le plus de détails possible..." oninput="updateStep(3)"></textarea>
+            <button class="btn-vocal" style="top:16px; transform:none;" onclick="startVocal('input-description', 'Décrivez ce qui s est passé')" title="Saisie vocale">🎙️</button>
+          </div>
+          <div class="vocal-status" id="vocal-status-description">
+            <div class="vocal-dot"></div>
+            <span>Enregistrement en cours... Parlez maintenant</span>
+          </div>
+        </div>
+
+        <!-- CONTACT OPTIONNEL -->
+        <div class="field">
+          <label>Votre email <small style="color:var(--ratp-gray); font-weight:300;">(optionnel — pour vous tenir informé)</small></label>
+          <div class="input-wrap">
+            <input type="email" id="input-email" placeholder="votre@email.com">
+            <button class="btn-vocal" onclick="startVocal('input-email', 'Dites votre adresse email')" title="Saisie vocale">🎙️</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Téléphone <small style="color:var(--ratp-gray); font-weight:300;">(optionnel)</small></label>
+          <div class="input-wrap">
+            <input type="tel" id="input-tel" placeholder="06 00 00 00 00">
+            <button class="btn-vocal" onclick="startVocal('input-tel', 'Dites votre numéro de téléphone')" title="Saisie vocale">🎙️</button>
+          </div>
+        </div>
+
+        <button class="btn-submit" id="btn-submit-manual" onclick="submitForm('manual')">
+          ✉️ Envoyer le signalement
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ======================================= -->
+    <!-- ONGLET 2 : QR CODE                      -->
+    <!-- ======================================= -->
+    <div id="tab-qr" class="tab-content">
+
+      <!-- LANGUE -->
+      <div class="form-section">
+        <div class="form-section-title">🌍 Langue / Language</div>
+        <div class="lang-bar">
+          <button class="lang-btn active" onclick="setLang('fr', this)">🇫🇷 Français</button>
+          <button class="lang-btn" onclick="setLang('en', this)">🇬🇧 English</button>
+          <button class="lang-btn" onclick="setLang('ar', this)">🇩🇿 العربية</button>
+          <button class="lang-btn" onclick="setLang('es', this)">🇪🇸 Español</button>
+          <button class="lang-btn" onclick="setLang('zh', this)">🇨🇳 中文</button>
+        </div>
+      </div>
+
+      <!-- INFOS PRÉ-REMPLIES DU QR -->
+      <div class="form-section">
+        <div class="form-section-title">📱 Informations du bus scanné</div>
+        <div class="qr-prefilled">
+          <div class="qr-prefilled-title">✅ Bus identifié automatiquement</div>
+          <div class="qr-prefilled-grid">
+            <div class="qr-info-item">
+              <div class="qr-info-label">Ligne</div>
+              <div class="qr-info-value" id="qr-ligne">{{ app.request.query.get('ligne') ?? '—' }}</div>
+            </div>
+            <div class="qr-info-item">
+              <div class="qr-info-label">Direction</div>
+              <div class="qr-info-value" id="qr-direction">{{ app.request.query.get('direction') ?? '—' }}</div>
+            </div>
+            <div class="qr-info-item">
+              <div class="qr-info-label">Arrêt</div>
+              <div class="qr-info-value" id="qr-arret">{{ app.request.query.get('arret') ?? '—' }}</div>
+            </div>
+            <div class="qr-info-item">
+              <div class="qr-info-label">Heure</div>
+              <div class="qr-info-value" id="qr-heure">{{ "now"|date("H:i") }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DESCRIPTION QR -->
+      <div class="form-section">
+        <div class="form-section-title">💬 Votre signalement</div>
+        <div class="field">
+          <label>Description <span class="required">*</span></label>
+          <div class="input-wrap">
+            <textarea id="qr-description" placeholder="Décrivez ce qui s'est passé..." style="min-height:130px;"></textarea>
+            <button class="btn-vocal" style="top:16px; transform:none;" onclick="startVocal('qr-description', 'Décrivez ce qui s est passé')" title="Saisie vocale">🎙️</button>
+          </div>
+          <div class="vocal-status" id="vocal-status-qr">
+            <div class="vocal-dot"></div>
+            <span>Enregistrement en cours... Parlez maintenant</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Email <small style="color:var(--ratp-gray); font-weight:300;">(optionnel)</small></label>
+          <div class="input-wrap">
+            <input type="email" id="qr-email" placeholder="votre@email.com">
+            <button class="btn-vocal" onclick="startVocal('qr-email', 'Dites votre adresse email')" title="Saisie vocale">🎙️</button>
+          </div>
+        </div>
+
+        <button class="btn-submit" onclick="submitForm('qr')">
+          ✉️ Envoyer le signalement
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ======================================= -->
+    <!-- ONGLET 3 : NOUS APPELER                 -->
+    <!-- ======================================= -->
+    <div id="tab-call" class="tab-content">
+      <div class="call-card">
+        <div class="call-icon-big">📞</div>
+        <h2 style="font-family:var(--font-display); font-size:22px; font-weight:800; color:var(--ratp-blue);">
+          Parlez à un agent RATP
+        </h2>
+        <p style="color:var(--ratp-gray); font-size:14px; margin-top:8px; font-weight:300; line-height:1.6;">
+          Un agent vous accueille et prend votre signalement<br>directement par téléphone, dans votre langue.
+        </p>
+
+        <div class="call-number-display">3424</div>
+        <p style="color:var(--ratp-gray); font-size:13px; margin-bottom:20px;">
+          Appel non surtaxé · Service client RATP
+        </p>
+
+        <div class="call-hours">
+          <div class="call-hours-title">📅 Horaires du service</div>
+          <div class="call-hours-row"><span>Lundi – Vendredi</span><span>7h00 – 21h00</span></div>
+          <div class="call-hours-row"><span>Samedi</span><span>9h00 – 18h00</span></div>
+          <div class="call-hours-row"><span>Dimanche & jours fériés</span><span>10h00 – 17h00</span></div>
+        </div>
+
+        <a href="tel:3424" class="btn-call">
+          📞 Appeler le 3424
+        </a>
+
+        <p class="call-note">
+          🌍 Service disponible en français, anglais, arabe et espagnol<br>
+          🔒 Votre signalement reste confidentiel<br>
+          ⏱️ Temps d'attente moyen : moins de 3 minutes
+        </p>
+      </div>
+    </div>
+
+  </div><!-- fin tabs-wrapper -->
+</div><!-- fin container -->
+
+<script>
+// ============================================
+// GESTION DES ONGLETS
+// ============================================
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ============================================
+// LANGUE
+// ============================================
+let currentLang = 'fr';
+function setLang(lang, btn) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ============================================
+// DONNÉES RATP (lignes bus Paris)
+// ============================================
+const lignesRATP = {
+  '20': { directions: ['Gare Saint-Lazare', 'Porte de Vincennes'], arrets: ['Opéra', 'République', 'Nation', 'Bastille'] },
+  '21': { directions: ['Gare Saint-Lazare', 'Porte de Gentilly'], arrets: ['Châtelet', 'Odéon', 'Denfert'] },
+  '26': { directions: ['Gare du Nord', 'Cours de Vincennes'], arrets: ['Barbès', 'Gare de Lyon', 'Nation'] },
+  '29': { directions: ['Gare Saint-Lazare', 'Montempoivre'], arrets: ['Opéra', 'Bastille', 'Vincennes'] },
+  '38': { directions: ['Gare du Nord', 'Porte d\'Orléans'], arrets: ['Châtelet', 'Odéon', 'Montparnasse'] },
+  '42': { directions: ['Gare du Nord', 'Carrefour Pleyel'], arrets: ['Magenta', 'La Chapelle', 'Saint-Denis'] },
+  '52': { directions: ['Opéra', 'Issy'], arrets: ['Opéra', 'Concorde', 'Invalides'] },
+  '54': { directions: ['Châtelet', 'Malakoff'], arrets: ['Châtelet', 'Odéon', 'Montrouge'] },
+  '62': { directions: ['Porte de Saint-Cloud', 'Porte d\'Ivry'], arrets: ['Trocadéro', 'Montparnasse', 'Ivry'] },
+  '63': { directions: ['Gare de Lyon', 'Porte de La Muette'], arrets: ['Bastille', 'Saint-Michel', 'Trocadéro'] },
+  '64': { directions: ['Gare de Lyon', 'Porte de Bercy'], arrets: ['Gare de Lyon', 'Nation', 'Bercy'] },
+  '66': { directions: ['Opéra', 'Porte des Lilas'], arrets: ['Opéra', 'République', 'Belleville'] },
+  '67': { directions: ['Pigalle', 'Porte de Gentilly'], arrets: ['Pigalle', 'Saint-Lazare', 'Montparnasse'] },
+  '72': { directions: ['Hôtel de Ville', 'Pont de Saint-Cloud'], arrets: ['Hôtel de Ville', 'Trocadéro', 'Boulogne'] },
+  '74': { directions: ['Opéra', 'Porte de Clichy'], arrets: ['Opéra', 'Madeleine', 'Clichy'] },
+  '80': { directions: ['Opéra', 'Porte de Versailles'], arrets: ['Opéra', 'Montparnasse', 'Vanves'] },
+  '84': { directions: ['Saint-Sulpice', 'Porte de Champerret'], arrets: ['Saint-Sulpice', 'Étoile', 'Neuilly'] },
+  '85': { directions: ['Gare du Nord', 'Montrouge'], arrets: ['Gare du Nord', 'Châtelet', 'Denfert'] },
+  '91': { directions: ['Gare Montparnasse', 'Bastille'], arrets: ['Montparnasse', 'Odéon', 'Saint-Michel', 'Bastille'] },
+  '92': { directions: ['Porte de Champerret', 'Gare Montparnasse'], arrets: ['Étoile', 'Invalides', 'Montparnasse'] },
+  '93': { directions: ['Issy-les-Moulineaux', 'Place du Colonel Fabien'], arrets: ['Vanves', 'Montparnasse', 'République'] },
+  '94': { directions: ['Gare Montparnasse', 'Levallois-Perret'], arrets: ['Montparnasse', 'Invalides', 'Étoile'] },
+  '95': { directions: ['Montrouge', 'Pontoise'], arrets: ['Montrouge', 'Saint-Michel', 'Pigalle'] },
+};
+
+let selectedLigne = null;
+let selectedDirection = null;
+let busId = null;
+let driverId = null;
+
+// ============================================
+// AUTOCOMPLÉTION LIGNE
+// ============================================
+function searchLigne(val) {
+  const list = document.getElementById('list-ligne');
+  if (val.length < 1) { list.classList.remove('open'); return; }
+  const matches = Object.keys(lignesRATP).filter(l => l.toLowerCase().startsWith(val.toLowerCase()));
+  if (matches.length === 0) { list.classList.remove('open'); return; }
+  list.innerHTML = matches.slice(0, 6).map(l =>
+    `<div class="autocomplete-item" onclick="selectLigne('${l}')">
+      <div class="item-icon">${l}</div>
+      <span>Ligne ${l} — ${lignesRATP[l].directions[0].split(' ')[0]}…</span>
+    </div>`
+  ).join('');
+  list.classList.add('open');
+}
+
+function selectLigne(ligne) {
+  selectedLigne = ligne;
+  document.getElementById('input-ligne').value = ligne;
+  document.getElementById('list-ligne').classList.remove('open');
+  const dirInput = document.getElementById('input-direction');
+  dirInput.disabled = false;
+  dirInput.placeholder = 'Choisissez une direction...';
+  dirInput.value = '';
+  selectedDirection = null;
+  document.getElementById('input-arret').disabled = true;
+  document.getElementById('input-arret').value = '';
+  checkFindBtn();
+}
+
+// ============================================
+// AUTOCOMPLÉTION DIRECTION
+// ============================================
+function searchDirection(val) {
+  if (!selectedLigne) return;
+  const list = document.getElementById('list-direction');
+  const dirs = lignesRATP[selectedLigne]?.directions || [];
+  const matches = dirs.filter(d => d.toLowerCase().includes(val.toLowerCase()));
+  if (matches.length === 0) { list.classList.remove('open'); return; }
+  list.innerHTML = matches.map(d =>
+    `<div class="autocomplete-item" onclick="selectDirection('${d}')">
+      <div class="item-icon">→</div>
+      <span>${d}</span>
+    </div>`
+  ).join('');
+  list.classList.add('open');
+}
+
+function selectDirection(dir) {
+  selectedDirection = dir;
+  document.getElementById('input-direction').value = dir;
+  document.getElementById('list-direction').classList.remove('open');
+  const arretInput = document.getElementById('input-arret');
+  arretInput.disabled = false;
+  arretInput.placeholder = 'Choisissez un arrêt...';
+  arretInput.value = '';
+  checkFindBtn();
+}
+
+// ============================================
+// AUTOCOMPLÉTION ARRÊT
+// ============================================
+function searchArret(val) {
+  if (!selectedLigne) return;
+  const list = document.getElementById('list-arret');
+  const arrets = lignesRATP[selectedLigne]?.arrets || [];
+  const matches = arrets.filter(a => a.toLowerCase().includes(val.toLowerCase()));
+  if (matches.length === 0) { list.classList.remove('open'); return; }
+  list.innerHTML = matches.map(a =>
+    `<div class="autocomplete-item" onclick="selectArret('${a}')">
+      <div class="item-icon">📍</div>
+      <span>${a}</span>
+    </div>`
+  ).join('');
+  list.classList.add('open');
+}
+
+function selectArret(arret) {
+  document.getElementById('input-arret').value = arret;
+  document.getElementById('list-arret').classList.remove('open');
+  checkFindBtn();
+}
+
+function checkFindBtn() {
+  const ligne = document.getElementById('input-ligne').value;
+  const dir = document.getElementById('input-direction').value;
+  const arret = document.getElementById('input-arret').value;
+  document.getElementById('btn-find-bus').disabled = !(ligne && dir && arret);
+}
+
+// Fermer les dropdowns en cliquant ailleurs
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.input-wrap')) {
+    document.querySelectorAll('.autocomplete-list').forEach(l => l.classList.remove('open'));
+  }
+});
+
+// ============================================
+// TROUVER LE BUS
+// ============================================
+async function findBus() {
+  const btn = document.getElementById('btn-find-bus');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Recherche en cours...';
+
+  const ligne = document.getElementById('input-ligne').value;
+  const direction = document.getElementById('input-direction').value;
+  const arret = document.getElementById('input-arret').value;
+  const datetime = document.getElementById('input-datetime').value || new Date().toISOString();
+
+  try {
+    const res = await fetch('/report/new/find-bus', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+      },
+      body: JSON.stringify({ lineId: ligne, stopId: arret, direction, reportDate: datetime })
+    });
+
+    const data = await res.json();
+
+    if (data.ok) {
+      busId = data.busId;
+      driverId = data.driverId;
+      showBusFound(ligne, direction, arret);
+    } else {
+      showBusError();
+    }
+  } catch(e) {
+    // En mode démo, on simule un bus trouvé
+    busId = Math.floor(Math.random() * 100) + 1;
+    driverId = Math.floor(Math.random() * 50) + 1;
+    showBusFound(ligne, direction, arret);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '🔍 Trouver le bus';
+}
+
+function showBusFound(ligne, direction, arret) {
+  document.getElementById('bus-error').classList.remove('visible');
+  const card = document.getElementById('bus-found-card');
+  document.getElementById('bus-found-title').textContent = `Bus Ligne ${ligne} trouvé !`;
+  document.getElementById('bus-found-detail').textContent = `${direction} · Arrêt ${arret}`;
+  card.classList.add('visible');
+  // Déverrouiller les sections suivantes
+  document.getElementById('section-horaire').classList.add('unlocked');
+  document.getElementById('section-description').classList.add('unlocked');
+  updateStep(1);
+}
+
+function showBusError() {
+  document.getElementById('bus-found-card').classList.remove('visible');
+  document.getElementById('bus-error').classList.add('visible');
+  document.getElementById('section-horaire').classList.remove('unlocked');
+  document.getElementById('section-description').classList.remove('unlocked');
+}
+
+// ============================================
+// INDICATEUR D'ÉTAPES
+// ============================================
+function updateStep(step) {
+  for (let i = 1; i <= 4; i++) {
+    const s = document.getElementById('step' + i);
+    if (!s) continue;
+    s.classList.remove('active', 'done');
+    if (i < step + 1) s.classList.add('done');
+    if (i === step + 1) s.classList.add('active');
+  }
+}
+
+// ============================================
+// RECONNAISSANCE VOCALE
+// ============================================
+let recognition = null;
+let currentVocalField = null;
+
+function startVocal(fieldId, prompt) {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('La reconnaissance vocale n\'est pas disponible sur ce navigateur. Utilisez Chrome.');
+    return;
+  }
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = event.currentTarget;
+
+  if (recognition && currentVocalField === fieldId) {
+    recognition.stop();
+    btn.classList.remove('recording');
+    const status = document.getElementById('vocal-status-' + fieldId.replace('input-', ''));
+    if (status) status.classList.remove('active');
+    return;
+  }
+
+  if (recognition) recognition.stop();
+
+  recognition = new SpeechRecognition();
+  recognition.lang = currentLang === 'fr' ? 'fr-FR' :
+                     currentLang === 'en' ? 'en-US' :
+                     currentLang === 'ar' ? 'ar-SA' :
+                     currentLang === 'es' ? 'es-ES' :
+                     currentLang === 'zh' ? 'zh-CN' : 'fr-FR';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  currentVocalField = fieldId;
+
+  btn.classList.add('recording');
+  const statusId = 'vocal-status-' + (fieldId.includes('description') ? 'description' : fieldId.includes('qr') ? 'qr' : '');
+  const status = document.getElementById(statusId);
+  if (status) status.classList.add('active');
+
+  recognition.onresult = (e) => {
+    const transcript = e.results[0][0].transcript;
+    const field = document.getElementById(fieldId);
+    if (field) {
+      if (field.tagName === 'TEXTAREA') {
+        field.value += (field.value ? ' ' : '') + transcript;
+      } else {
+        field.value = transcript;
+      }
+      field.dispatchEvent(new Event('input'));
+    }
+    btn.classList.remove('recording');
+    if (status) status.classList.remove('active');
+  };
+
+  recognition.onerror = () => {
+    btn.classList.remove('recording');
+    if (status) status.classList.remove('active');
+  };
+
+  recognition.onend = () => {
+    btn.classList.remove('recording');
+    if (status) status.classList.remove('active');
+  };
+
+  recognition.start();
+}
+
+// ============================================
+// SOUMISSION DU FORMULAIRE
+// ============================================
+async function submitForm(source) {
+  let description, email, tel, reportDate, heureIncident;
+
+  if (source === 'manual') {
+    description = document.getElementById('input-description').value.trim();
+    email = document.getElementById('input-email').value.trim();
+    tel = document.getElementById('input-tel').value.trim();
+    const dt = document.getElementById('input-datetime').value;
+    if (!dt) { alert('Veuillez indiquer la date et l\'heure.'); return; }
+    reportDate = new Date(dt).toISOString().replace('T', ' ').substring(0, 19);
+    heureIncident = dt.substring(11, 16);
+  } else {
+    description = document.getElementById('qr-description').value.trim();
+    email = document.getElementById('qr-email').value.trim();
+    tel = '';
+    reportDate = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    heureIncident = new Date().toTimeString().substring(0, 5);
+  }
+
+  if (!description) { alert('Veuillez décrire le signalement.'); return; }
+  if (!busId || !driverId) { alert('Veuillez d\'abord trouver le bus.'); return; }
+
+  const payload = {
+    driver_id: driverId,
+    bus_id: busId,
+    description,
+    report_date: reportDate,
+    heure_incident: heureIncident,
+    reporter_contact: { email, telephone: tel },
+    source: source
+  };
+
+  const btn = event.currentTarget;
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Envoi en cours...';
+
+  try {
+    const res = await fetch('/report/new', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+      window.location.href = '/report/thanks';
+    } else {
+      alert('Une erreur est survenue. Veuillez réessayer.');
+      btn.disabled = false;
+      btn.innerHTML = '✉️ Envoyer le signalement';
+    }
+  } catch(e) {
+    alert('Impossible de joindre le serveur. Vérifiez votre connexion.');
+    btn.disabled = false;
+    btn.innerHTML = '✉️ Envoyer le signalement';
+  }
+}
+
+// ============================================
+// QR CODE : PRÉREMPLISSAGE DEPUIS L'URL
+// ============================================
+const params = new URLSearchParams(window.location.search);
+if (params.get('busId')) {
+  busId = parseInt(params.get('busId'));
+  // Activer l'onglet QR automatiquement
+  switchTab('qr');
+  document.querySelectorAll('.tab-btn')[1].classList.add('active');
+  document.querySelectorAll('.tab-btn')[0].classList.remove('active');
+}
+
+// Initialiser la date/heure à maintenant
+const now = new Date();
+const pad = n => String(n).padStart(2, '0');
+document.getElementById('input-datetime').value =
+  `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+</script>
+
+</body>
+</html>
+{% endblock %}

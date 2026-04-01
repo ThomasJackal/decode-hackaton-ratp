@@ -1,0 +1,31 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau compte gestionnaire{% endblock %}
+
+{% block body %}
+    <div class="page-intro">
+        <h1 class="page-title">Créer un accès gestionnaire</h1>
+        <p class="page-subtitle">Les nouveaux comptes ne peuvent être créés que par une personne déjà connectée.</p>
+    </div>
+
+    <div class="form-panel">
+        {% if error %}
+            <p class="error" style="color: var(--color-danger); margin-bottom: 1rem;">{{ error }}</p>
+        {% endif %}
+
+        <form method="post">
+            <p>
+                <label for="username">Identifiant (e-mail ou nom de compte)</label><br>
+                <input type="text" id="username" name="username" value="{{ user.username|default('') }}" required autocomplete="username">
+            </p>
+            <p>
+                <label for="password">Mot de passe</label><br>
+                <input type="password" id="password" name="password" required autocomplete="new-password">
+            </p>
+            <p>
+                <button type="submit" class="btn">Créer le compte</button>
+                <a href="{{ path('app_home') }}" class="btn btn--secondary" style="margin-left: 0.5rem;">Annuler</a>
+            </p>
+        </form>
+    </div>
+{% endblock %}

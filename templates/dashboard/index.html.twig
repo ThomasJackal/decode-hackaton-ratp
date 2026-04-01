@@ -1,0 +1,166 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de bord{% endblock %}
+
+{% block body %}
+    <div class="page-intro">
+        <h1 class="page-title">Tableau de bord</h1>
+        <p class="page-subtitle">Vue d’ensemble des signalements : volumes récents, répartition par gravité et par catégorie, accès rapide au détail et aux filtres de la liste.</p>
+    </div>
+
+    <section class="stat-grid" aria-label="Indicateurs principaux">
+        <article class="stat-card">
+            <h2 class="stat-card__label">Signalements (total)</h2>
+            <p class="stat-card__value">{{ report_count }}</p>
+            <p class="stat-card__hint">Base complète</p>
+            <a href="{{ path('app_report_index') }}" class="stat-card__link">Liste avec filtres →</a>
+        </article>
+        <article class="stat-card">
+            <h2 class="stat-card__label">7 derniers jours</h2>
+            <p class="stat-card__value">{{ reports_last_7_days }}</p>
+            <p class="stat-card__hint">Créés sur cette période</p>
+            <a href="{{ path('app_report_index', { period: '7d' }) }}" class="stat-card__link">Voir cette période →</a>
+        </article>
+        <article class="stat-card">
+            <h2 class="stat-card__label">30 derniers jours</h2>
+            <p class="stat-card__value">{{ reports_last_30_days }}</p>
+            <p class="stat-card__hint">Créés sur cette période</p>
+            <a href="{{ path('app_report_index', { period: '30d' }) }}" class="stat-card__link">Voir cette période →</a>
+        </article>
+        <article class="stat-card">
+            <h2 class="stat-card__label">Conducteurs</h2>
+            <p class="stat-card__value">{{ driver_count }}</p>
+            <p class="stat-card__hint">Fiches conducteur</p>
+            <a href="{{ path('app_driver_index') }}" class="stat-card__link">Voir la liste →</a>
+        </article>
+    </section>
+
+    <section class="dashboard-layout" aria-label="Tendances sur 30 jours">
+        <div class="panel">
+            <div class="panel__header">
+                <h2 class="panel__title">Répartition par gravité (30&nbsp;j.)</h2>
+                <a href="{{ path('app_report_index', { period: '30d' }) }}" class="panel__action">Liste filtrée</a>
+            </div>
+            {% if severity_breakdown_30d is empty %}
+                <p class="panel__empty">Aucun signalement sur les 30 derniers jours.</p>
+            {% else %}
+                <ul class="breakdown-list" role="list">
+                    {% for row in severity_breakdown_30d %}
+                        <li class="breakdown-list__item">
+                            <a href="{{ path('app_report_index', { period: '30d', severity: row.severity }) }}" class="breakdown-list__link">
+                                <span class="report-shortlist__severity report-shortlist__severity--{{ row.severity|default('')|lower }}">{{ row.severity ?? '—' }}</span>
+                                <span class="breakdown-list__count">{{ row.cnt }}</span>
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        <div class="panel">
+            <div class="panel__header">
+                <h2 class="panel__title">Catégories les plus fréquentes (30&nbsp;j.)</h2>
+                <a href="{{ path('app_report_index', { period: '30d' }) }}" class="panel__action">Tout voir</a>
+            </div>
+            {% if category_breakdown_30d is empty %}
+                <p class="panel__empty">Aucun signalement sur les 30 derniers jours.</p>
+            {% else %}
+                <ol class="breakdown-list breakdown-list--ranked" role="list">
+                    {% for row in category_breakdown_30d %}
+                        <li class="breakdown-list__item">
+                            <a href="{{ path('app_report_index', { period: '30d', category: row.category }) }}" class="breakdown-list__link">
+                                <span class="breakdown-list__label">{{ row.category }}</span>
+                                <span class="breakdown-list__count">{{ row.cnt }}</span>
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ol>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="panel" aria-labelledby="dashboard-all-reports-heading">
+        <div class="panel__header">
+            <h2 class="panel__title" id="dashboard-all-reports-heading">Tous les signalements</h2>
+            <div class="panel__header-actions">
+                <span class="panel__meta" aria-live="polite">
+                    {% if report_count > 0 %}
+                        Page {{ dashboard_page }} sur {{ dashboard_total_pages }} · {{ report_count }} au total
+                    {% else %}
+                        0 signalement
+                    {% endif %}
+                </span>
+                <a href="{{ path('app_report_index') }}" class="panel__action">Filtres avancés (gravité, bus, conducteur…)</a>
+            </div>
+        </div>
+        {% if dashboard_reports is empty %}
+            <p class="panel__empty">Aucun signalement pour le moment. Les voyageurs peuvent en soumettre via le formulaire public.</p>
+        {% else %}
+            <div class="table-wrap table-wrap--flush">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Créé le</th>
+                            <th scope="col">Gravité</th>
+                            <th scope="col">Catégorie</th>
+                            <th scope="col">Résumé</th>
+                            <th scope="col">Conducteur</th>
+                            <th scope="col">Bus</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in dashboard_reports %}
+                            <tr>
+                                <td>
+                                    <time datetime="{{ report.createdAt ? report.createdAt|date('c') : '' }}">
+                                        {{ report.createdAt ? report.createdAt|date('d/m/Y H:i') : '—' }}
+                                    </time>
+                                </td>
+                                <td>
+                                    <span class="report-shortlist__severity report-shortlist__severity--{{ report.severity|default('')|lower }}">{{ report.severity }}</span>
+                                </td>
+                                <td>{{ report.category }}</td>
+                                <td>
+                                    {% set text = report.summary ?: report.description %}
+                                    {{ text|length > 90 ? text|slice(0, 90) ~ '…' : text }}
+                                </td>
+                                <td>
+                                    {% if report.driver %}
+                                        <a href="{{ path('app_report_index', { driver_id: report.driver.id }) }}">#{{ report.driver.id }}</a>
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if report.bus %}
+                                        <a href="{{ path('app_report_index', { bus_id: report.bus.id }) }}">#{{ report.bus.id }}</a>
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ path('app_report_show', { id: report.id }) }}">Détail</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if dashboard_total_pages > 1 %}
+                <nav class="pagination-bar" aria-label="Pagination du tableau des signalements">
+                    {% if dashboard_page > 1 %}
+                        <a rel="prev" class="btn btn--secondary" href="{{ path('app_home', { page: dashboard_page - 1 }) }}">Page précédente</a>
+                    {% else %}
+                        <span class="pagination-bar__spacer" aria-hidden="true"></span>
+                    {% endif %}
+                    <span class="pagination-bar__status">Page {{ dashboard_page }} / {{ dashboard_total_pages }}</span>
+                    {% if dashboard_page < dashboard_total_pages %}
+                        <a rel="next" class="btn btn--secondary" href="{{ path('app_home', { page: dashboard_page + 1 }) }}">Page suivante</a>
+                    {% else %}
+                        <span class="pagination-bar__spacer" aria-hidden="true"></span>
+                    {% endif %}
+                </nav>
+            {% endif %}
+        {% endif %}
+    </section>
+{% endblock %}

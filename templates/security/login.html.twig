@@ -1,0 +1,34 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Connexion — gestion{% endblock %}
+
+{% block body %}
+    <div class="auth-card">
+        <h1>Connexion équipe</h1>
+        <p style="margin: 0 0 1.25rem; color: var(--color-text-muted); font-size: 0.9rem;">Accès réservé aux gestionnaires RATP Bus.</p>
+
+        {% if error %}
+            <p class="error">{{ error.messageKey|trans(error.messageData, 'security') }}</p>
+        {% endif %}
+
+        {% if app.user %}
+            <p>Connecté en tant que <strong>{{ app.user.userIdentifier }}</strong>.</p>
+            <p><a href="{{ path('app_logout') }}" class="btn">Déconnexion</a></p>
+        {% else %}
+            <form method="post">
+                <p>
+                    <label for="username">Identifiant</label><br>
+                    <input type="text" id="username" name="username" value="{{ last_username }}" required autofocus autocomplete="username">
+                </p>
+                <p>
+                    <label for="password">Mot de passe</label><br>
+                    <input type="password" id="password" name="password" required autocomplete="current-password">
+                </p>
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                <p>
+                    <button type="submit" class="btn">Se connecter</button>
+                </p>
+            </form>
+        {% endif %}
+    </div>
+{% endblock %}

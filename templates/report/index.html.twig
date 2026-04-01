@@ -1,0 +1,128 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Signalements{% endblock %}
+
+{% block body %}
+    <div class="page-intro">
+        <h1 class="page-title">Signalements</h1>
+        <p class="page-subtitle">Liste paginée avec filtres par période, gravité, catégorie, conducteur ou bus.</p>
+    </div>
+
+    <section class="panel report-filters" aria-labelledby="report-filters-heading">
+        <div class="panel__header">
+            <h2 class="panel__title" id="report-filters-heading">Filtres</h2>
+        </div>
+        <form method="get" action="{{ path('app_report_index') }}" class="report-filter-form">
+            <div class="report-filter-form__grid">
+                <div class="form-field-spaced mb-0">
+                    <label for="filter-period">Période (date de création)</label>
+                    <select id="filter-period" name="period">
+                        <option value="" {{ filter_period == '' ? 'selected' }}>Toute la période</option>
+                        <option value="7d" {{ filter_period == '7d' ? 'selected' }}>7 derniers jours</option>
+                        <option value="30d" {{ filter_period == '30d' ? 'selected' }}>30 derniers jours</option>
+                    </select>
+                </div>
+                <div class="form-field-spaced mb-0">
+                    <label for="filter-severity">Gravité</label>
+                    <select id="filter-severity" name="severity">
+                        <option value="">Toutes</option>
+                        {% for s in severity_options %}
+                            <option value="{{ s }}" {{ filter_severity == s ? 'selected' }}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-field-spaced mb-0">
+                    <label for="filter-category">Catégorie</label>
+                    <select id="filter-category" name="category">
+                        <option value="">Toutes</option>
+                        {% for c in category_options %}
+                            <option value="{{ c }}" {{ filter_category == c ? 'selected' }}>{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-field-spaced mb-0">
+                    <label for="filter-driver">Identifiant conducteur</label>
+                    <input id="filter-driver" type="number" name="driver_id" min="1" step="1" value="{{ filter_driver_id ?: '' }}" placeholder="ex. 12" autocomplete="off">
+                </div>
+                <div class="form-field-spaced mb-0">
+                    <label for="filter-bus">Identifiant bus</label>
+                    <input id="filter-bus" type="number" name="bus_id" min="1" step="1" value="{{ filter_bus_id ?: '' }}" placeholder="ex. 5" autocomplete="off">
+                </div>
+            </div>
+            <div class="stack-actions report-filter-form__actions">
+                <button type="submit" class="btn">Appliquer les filtres</button>
+                <a href="{{ path('app_report_index') }}" class="btn btn--secondary">Réinitialiser</a>
+            </div>
+        </form>
+    </section>
+
+    <p class="report-list-meta" role="status">
+        {% if report_list_total == 0 %}
+            Aucun signalement ne correspond aux critères.
+        {% else %}
+            {{ report_list_total }} signalement{{ report_list_total > 1 ? 's' }} · page {{ report_list_page }} sur {{ report_list_total_pages }}
+        {% endif %}
+    </p>
+
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">Id</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Gravité</th>
+                    <th scope="col">Catégorie</th>
+                    <th scope="col">Conducteur</th>
+                    <th scope="col">Bus</th>
+                    <th scope="col">Date du fait</th>
+                    <th scope="col">Créé le</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for report in reports %}
+                <tr>
+                    <td>{{ report.id }}</td>
+                    <td>{{ report.description|length > 120 ? report.description|slice(0, 120) ~ '…' : report.description }}</td>
+                    <td>{{ report.severity }}</td>
+                    <td>{{ report.category }}</td>
+                    <td>{{ report.driver ? '#' ~ report.driver.id : '—' }}</td>
+                    <td>{{ report.bus ? '#' ~ report.bus.id : '—' }}</td>
+                    <td>{{ report.reportDate ? report.reportDate|date('d/m/Y H:i') : '—' }}</td>
+                    <td>{{ report.createdAt ? report.createdAt|date('d/m/Y H:i') : '—' }}</td>
+                    <td>
+                        <a href="{{ path('app_report_show', {'id': report.id}) }}">Voir</a>
+                        <a href="{{ path('app_report_edit', {'id': report.id}) }}">Modifier</a>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="9">Aucun signalement à afficher.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if report_list_total_pages > 1 %}
+        <nav class="pagination-bar" aria-label="Pagination de la liste des signalements">
+            {% set base_q = report_list_filter_query %}
+            {% if report_list_page > 1 %}
+                <a rel="prev" class="btn btn--secondary" href="{{ path('app_report_index', base_q|merge({ page: report_list_page - 1 })) }}">Page précédente</a>
+            {% else %}
+                <span class="pagination-bar__spacer" aria-hidden="true"></span>
+            {% endif %}
+            <span class="pagination-bar__status">Page {{ report_list_page }} / {{ report_list_total_pages }}</span>
+            {% if report_list_page < report_list_total_pages %}
+                <a rel="next" class="btn btn--secondary" href="{{ path('app_report_index', base_q|merge({ page: report_list_page + 1 })) }}">Page suivante</a>
+            {% else %}
+                <span class="pagination-bar__spacer" aria-hidden="true"></span>
+            {% endif %}
+        </nav>
+    {% endif %}
+
+    <div class="stack-actions">
+        <a href="{{ path('app_report_new') }}" class="btn btn--secondary">Ouvrir le formulaire public (voyageurs)</a>
+        <a href="{{ path('app_home') }}" class="btn btn--secondary">Tableau de bord</a>
+    </div>
+{% endblock %}

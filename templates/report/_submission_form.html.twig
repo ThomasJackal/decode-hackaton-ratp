@@ -1,0 +1,54 @@
+{% set prefilled_bus_id = prefilled_bus_id|default(null) %}
+{% set form_action = prefilled_bus_id ? path('app_report_new', { busId: prefilled_bus_id }) : path('app_report_new') %}
+
+{{ form_start(form, { action: form_action, attr: {
+    class: 'report-submission-form',
+    'data-controller': 'report-bus-finder',
+    'data-report-bus-finder-find-url-value': path('app_report_find_bus'),
+    'data-report-bus-finder-csrf-token-value': csrf_token('report_find_bus'),
+    'data-report-bus-finder-prefilled-bus-id-value': prefilled_bus_id ?? '',
+} }) }}
+
+    <div class="form-field-spaced">
+        {{ form_row(form.ReportDate) }}
+    </div>
+
+    <details
+        class="bus-finder{% if prefilled_bus_id %} bus-finder--resolved{% endif %}"
+        data-report-bus-finder-target="details"
+        {% if prefilled_bus_id is null %}open{% endif %}
+    >
+        <summary class="bus-finder__summary">Bus Finder</summary>
+        <div class="bus-finder__body">
+            {% if prefilled_bus_id %}
+                {{ form_row(form.busIdentifier) }}
+            {% else %}
+                {{ form_row(form.lineId) }}
+                {{ form_row(form.stopId) }}
+                {{ form_row(form.direction) }}
+                <button type="button" class="btn btn--secondary bus-finder__action" data-action="click->report-bus-finder#find">
+                    Trouver le bus
+                </button>
+            {% endif %}
+            <p class="bus-finder__message" data-report-bus-finder-target="message" role="status" aria-live="polite">
+                {% if prefilled_bus_id %}
+                    Bus n°{{ prefilled_bus_id }} est présélectionné (paramètre d’URL).
+                {% endif %}
+            </p>
+        </div>
+    </details>
+
+    <div class="form-field-spaced">
+        {{ form_row(form.description) }}
+    </div>
+
+    <div class="form-field-spaced">
+        {{ form_row(form.reporterEmail) }}
+        {{ form_row(form.reporterTelephone) }}
+    </div>
+
+    <div class="stack-actions" style="margin-top: 1.25rem;">
+        <button type="submit" class="btn">{{ button_label|default('Envoyer') }}</button>
+    </div>
+
+{{ form_end(form) }}

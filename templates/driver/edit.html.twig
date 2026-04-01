@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier le conducteur{% endblock %}
+
+{% block body %}
+    <div class="page-intro">
+        <h1 class="page-title">Modifier le conducteur</h1>
+    </div>
+
+    <div class="form-panel">
+        {{ include('driver/_form.html.twig', { button_label: 'Mettre à jour' }) }}
+        <div class="stack-actions">
+            <a href="{{ path('app_driver_show', {'id': driver.id}) }}" class="btn btn--secondary">Annuler</a>
+            {{ include('driver/_delete_form.html.twig') }}
+        </div>
+    </div>
+{% endblock %}

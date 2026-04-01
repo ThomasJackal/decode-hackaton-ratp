@@ -1,0 +1,4 @@
+<form method="post" action="{{ path('app_driver_delete', {'id': driver.id}) }}" onsubmit="return confirm('Supprimer ce conducteur ?');">
+    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ driver.id) }}">
+    <button type="submit" class="btn btn--danger">Supprimer</button>
+</form>

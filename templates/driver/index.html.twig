@@ -1,0 +1,43 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Conducteurs{% endblock %}
+
+{% block body %}
+    <div class="page-intro">
+        <h1 class="page-title">Conducteurs</h1>
+        <p class="page-subtitle">Référentiel des conducteurs.</p>
+    </div>
+
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Contact</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for driver in drivers %}
+                <tr>
+                    <td>{{ driver.id }}</td>
+                    <td>{{ driver.contact }}</td>
+                    <td>
+                        <a href="{{ path('app_driver_show', {'id': driver.id}) }}">Voir</a>
+                        <a href="{{ path('app_driver_edit', {'id': driver.id}) }}">Modifier</a>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="3">Aucun conducteur.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="stack-actions">
+        <a href="{{ path('app_driver_new') }}" class="btn">Ajouter un conducteur</a>
+        <a href="{{ path('app_home') }}" class="btn btn--secondary">Tableau de bord</a>
+    </div>
+{% endblock %}

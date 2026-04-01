@@ -1,0 +1,16 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau conducteur{% endblock %}
+
+{% block body %}
+    <div class="page-intro">
+        <h1 class="page-title">Ajouter un conducteur</h1>
+    </div>
+
+    <div class="form-panel">
+        {{ include('driver/_form.html.twig', { button_label: 'Enregistrer' }) }}
+        <div class="stack-actions">
+            <a href="{{ path('app_driver_index') }}" class="btn btn--secondary">Retour à la liste</a>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Conducteur #{{ driver.id }}{% endblock %}
+
+{% block body %}
+    <div class="page-intro">
+        <h1 class="page-title">Conducteur #{{ driver.id }}</h1>
+    </div>
+
+    <div class="table-wrap">
+        <table class="table">
+            <tbody>
+                <tr>
+                    <th>Id</th>
+                    <td>{{ driver.id }}</td>
+                </tr>
+                <tr>
+                    <th>Contact</th>
+                    <td>{{ driver.contact }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="stack-actions">
+        <a href="{{ path('app_driver_index') }}" class="btn btn--secondary">Liste</a>
+        <a href="{{ path('app_driver_edit', {'id': driver.id}) }}" class="btn">Modifier</a>
+        {{ include('driver/_delete_form.html.twig') }}
+    </div>
+{% endblock %}
