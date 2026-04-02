@@ -21,7 +21,7 @@ class Report
     private ?string $severity = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $category = null;
+    private ?string $situationType = null;
 
     #[ORM\ManyToOne(inversedBy: 'reports')]
     #[ORM\JoinColumn(nullable: false)]
@@ -35,16 +35,25 @@ class Report
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $ReportDate = null;
+    private ?\DateTimeImmutable $reportDate = null;
+
+    #[ORM\Column]
+    private ?\DateTimeImmutable $incidentDate = null;
 
     #[ORM\Column(type: Types::JSONB)]
     private mixed $reporterContact = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    private ?string $context = null;
+    private ?string $aggravatingContext = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    private ?string $summary = null;
+    private ?string $mitigatingContext = null;
+
+    #[ORM\Column(type: Types::TEXT)]
+    private ?string $situationSummary = null;
+
+    #[ORM\Column(length: 32)]
+    private ?string $reportCredibility = null;
 
     #[ORM\Column(type: Types::JSONB)]
     private mixed $metadata = null;
@@ -78,14 +87,14 @@ class Report
         return $this;
     }
 
-    public function getCategory(): ?string
+    public function getSituationType(): ?string
     {
-        return $this->category;
+        return $this->situationType;
     }
 
-    public function setCategory(string $category): static
+    public function setSituationType(string $situationType): static
     {
-        $this->category = $category;
+        $this->situationType = $situationType;
 
         return $this;
     }
@@ -128,12 +137,24 @@ class Report
 
     public function getReportDate(): ?\DateTimeImmutable
     {
-        return $this->ReportDate;
+        return $this->reportDate;
     }
 
-    public function setReportDate(\DateTimeImmutable $ReportDate): static
+    public function setReportDate(\DateTimeImmutable $reportDate): static
     {
-        $this->ReportDate = $ReportDate;
+        $this->reportDate = $reportDate;
+
+        return $this;
+    }
+
+    public function getIncidentDate(): ?\DateTimeImmutable
+    {
+        return $this->incidentDate;
+    }
+
+    public function setIncidentDate(\DateTimeImmutable $incidentDate): static
+    {
+        $this->incidentDate = $incidentDate;
 
         return $this;
     }
@@ -150,26 +171,50 @@ class Report
         return $this;
     }
 
-    public function getContext(): ?string
+    public function getAggravatingContext(): ?string
     {
-        return $this->context;
+        return $this->aggravatingContext;
     }
 
-    public function setContext(string $context): static
+    public function setAggravatingContext(string $aggravatingContext): static
     {
-        $this->context = $context;
+        $this->aggravatingContext = $aggravatingContext;
 
         return $this;
     }
 
-    public function getSummary(): ?string
+    public function getMitigatingContext(): ?string
     {
-        return $this->summary;
+        return $this->mitigatingContext;
     }
 
-    public function setSummary(string $summary): static
+    public function setMitigatingContext(string $mitigatingContext): static
     {
-        $this->summary = $summary;
+        $this->mitigatingContext = $mitigatingContext;
+
+        return $this;
+    }
+
+    public function getSituationSummary(): ?string
+    {
+        return $this->situationSummary;
+    }
+
+    public function setSituationSummary(string $situationSummary): static
+    {
+        $this->situationSummary = $situationSummary;
+
+        return $this;
+    }
+
+    public function getReportCredibility(): ?string
+    {
+        return $this->reportCredibility;
+    }
+
+    public function setReportCredibility(string $reportCredibility): static
+    {
+        $this->reportCredibility = $reportCredibility;
 
         return $this;
     }

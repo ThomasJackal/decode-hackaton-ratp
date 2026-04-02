@@ -4,12 +4,10 @@ namespace App\Controller;
 
 use App\Entity\Report;
 use App\Form\ReportSubmissionType;
-use App\Form\ReportType;
 use App\Repository\BusRepository;
 use App\Repository\DriverRepository;
 use App\Repository\ReportRepository;
 use App\Service\Interface\FinderServiceInterface;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormInterface;
@@ -22,8 +20,6 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 #[Route('/report')]
 final class ReportController extends AbstractController
 {
-    private const DEFAULT_WEBHOOK_URL = 'http://localhost:5678/webhook/signalement';
-
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly string $reportWebhookUrl,
@@ -43,13 +39,16 @@ final class ReportController extends AbstractController
         };
 
         $severity = $request->query->getString('severity', '') ?: null;
-        $category = $request->query->getString('category', '') ?: null;
+        $situationType = $request->query->getString('situation_type', '') ?: null;
+        if (null === $situationType || '' === $situationType) {
+            $situationType = $request->query->getString('category', '') ?: null;
+        }
         $driverId = $request->query->getInt('driver_id');
         $driverId = $driverId > 0 ? $driverId : null;
         $busId = $request->query->getInt('bus_id');
         $busId = $busId > 0 ? $busId : null;
 
-        $total = $reportRepository->countManagementFiltered($since, $severity, $category, $driverId, $busId);
+        $total = $reportRepository->countManagementFiltered($since, $severity, $situationType, $driverId, $busId);
         $page = max(1, $request->query->getInt('page', 1));
         $totalPages = max(1, (int) ceil($total / self::REPORT_LIST_PAGE_SIZE));
         if ($page > $totalPages) {
@@ -61,7 +60,7 @@ final class ReportController extends AbstractController
             ? $reportRepository->findManagementFiltered(
                 $since,
                 $severity,
-                $category,
+                $situationType,
                 $driverId,
                 $busId,
                 self::REPORT_LIST_PAGE_SIZE,
@@ -72,7 +71,7 @@ final class ReportController extends AbstractController
         $filterQuery = array_filter([
             'period' => '' !== $period ? $period : null,
             'severity' => $severity,
-            'category' => $category,
+            'situation_type' => $situationType,
             'driver_id' => $driverId,
             'bus_id' => $busId,
         ], static fn ($v) => null !== $v && '' !== $v);
@@ -85,11 +84,11 @@ final class ReportController extends AbstractController
             'report_list_filter_query' => $filterQuery,
             'filter_period' => $period,
             'filter_severity' => $severity ?? '',
-            'filter_category' => $category ?? '',
+            'filter_situation_type' => $situationType ?? '',
             'filter_driver_id' => $driverId ?? 0,
             'filter_bus_id' => $busId ?? 0,
             'severity_options' => $reportRepository->findDistinctSeverityValues(),
-            'category_options' => $reportRepository->findDistinctCategoryValues(),
+            'situation_type_options' => $reportRepository->findDistinctSituationTypeValues(),
         ]);
     }
 
@@ -176,7 +175,6 @@ final class ReportController extends AbstractController
     #[Route('/new', name: 'app_report_new', methods: ['GET', 'POST'])]
     public function new(
         Request $request,
-        EntityManagerInterface $entityManager,
         FinderServiceInterface $finder,
         BusRepository $busRepository,
         DriverRepository $driverRepository,
@@ -188,13 +186,17 @@ final class ReportController extends AbstractController
         }
 
         $report = new Report();
-        $report->setReportDate(new \DateTimeImmutable());
+        $now = new \DateTimeImmutable();
+        $report->setReportDate($now);
+        $report->setIncidentDate($now);
         $report->setReporterContact([]);
-        $report->setContext('');
-        $report->setSummary('');
+        $report->setAggravatingContext('');
+        $report->setMitigatingContext('');
+        $report->setSituationSummary('');
+        $report->setReportCredibility('');
         $report->setMetadata([]);
         $report->setSeverity('non-renseigne');
-        $report->setCategory('non-renseigne');
+        $report->setSituationType('non-renseigne');
 
         $form = $this->createForm(ReportSubmissionType::class, $report, [
             'bus_identifier_from_url' => null !== $prefilledBusId,
@@ -207,7 +209,14 @@ final class ReportController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $webhookUrl = trim($this->reportWebhookUrl) !== '' ? trim($this->reportWebhookUrl) : self::DEFAULT_WEBHOOK_URL;
+            $webhookUrl = trim($this->reportWebhookUrl);
+            if ('' === $webhookUrl) {
+                $form->addError(new FormError(
+                    'La variable d’environnement REPORT_WEBHOOK_URL doit être définie pour envoyer le signalement.'
+                ));
+
+                return $this->render('report/new.html.twig', $this->newFormViewContext($form, $report, $prefilledBusId));
+            }
 
             $reportDate = $report->getReportDate();
             if (null === $reportDate) {
@@ -215,6 +224,8 @@ final class ReportController extends AbstractController
 
                 return $this->render('report/new.html.twig', $this->newFormViewContext($form, $report, $prefilledBusId));
             }
+
+            $report->setIncidentDate($reportDate);
 
             $resolved = $this->resolveBusAndDriverFromFinder($finder, $reportDate, $form, $prefilledBusId);
 
@@ -230,7 +241,6 @@ final class ReportController extends AbstractController
 
             $busId = $resolved['busId'];
             $driverId = $resolved['driverId'];
-            $found = $resolved['finder'];
 
             $bus = $busRepository->find((int) $busId);
             $driver = $driverRepository->find((int) $driverId);
@@ -241,32 +251,17 @@ final class ReportController extends AbstractController
                 return $this->render('report/new.html.twig', $this->newFormViewContext($form, $report, $prefilledBusId));
             }
 
-            $report->setBus($bus);
-            $report->setDriver($driver);
-
-            if (null === $report->getCreatedAt()) {
-                $report->setCreatedAt(new \DateTimeImmutable());
-            }
-
-            $meta = $report->getMetadata();
-            $report->setMetadata(array_merge(\is_array($meta) ? $meta : [], [
-                'finder' => $found,
-                'finderResolvedAt' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
-            ]));
-
             $reporterEmail = trim((string) $form->get('reporterEmail')->getData());
             $reporterTelephone = trim((string) $form->get('reporterTelephone')->getData());
-            $report->setReporterContact([
-                'email' => $reporterEmail,
-                'telephone' => $reporterTelephone,
-            ]);
 
+            $incidentDate = $report->getIncidentDate() ?? $reportDate;
+            $dateFmt = 'Y-m-d H:i:s';
             $payload = [
                 'driver_id' => $driver->getId(),
                 'bus_id' => $bus->getId(),
-                'description' => $report->getDescription(),
-                'report_date' => $reportDate->format('Y-m-d H:i:s'),
-                'heure_incident' => $reportDate->format('H:i'),
+                'description' => (string) $report->getDescription(),
+                'report_date' => $reportDate->format($dateFmt),
+                'incident_date' => $incidentDate->format($dateFmt),
                 'reporter_contact' => [
                     'email' => $reporterEmail,
                     'telephone' => $reporterTelephone,
@@ -294,9 +289,6 @@ final class ReportController extends AbstractController
 
                 return $this->render('report/new.html.twig', $this->newFormViewContext($form, $report, $prefilledBusId));
             }
-
-            $entityManager->persist($report);
-            $entityManager->flush();
 
             return $this->redirectToRoute('app_report_thanks', [], Response::HTTP_SEE_OTHER);
         }
@@ -410,32 +402,4 @@ final class ReportController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/edit', name: 'app_report_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Report $report, EntityManagerInterface $entityManager): Response
-    {
-        $form = $this->createForm(ReportType::class, $report);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush();
-
-            return $this->redirectToRoute('app_report_index', [], Response::HTTP_SEE_OTHER);
-        }
-
-        return $this->render('report/edit.html.twig', [
-            'report' => $report,
-            'form' => $form,
-        ]);
-    }
-
-    #[Route('/{id}', name: 'app_report_delete', methods: ['POST'])]
-    public function delete(Request $request, Report $report, EntityManagerInterface $entityManager): Response
-    {
-        if ($this->isCsrfTokenValid('delete'.$report->getId(), $request->getPayload()->getString('_token'))) {
-            $entityManager->remove($report);
-            $entityManager->flush();
-        }
-
-        return $this->redirectToRoute('app_report_index', [], Response::HTTP_SEE_OTHER);
-    }
 }

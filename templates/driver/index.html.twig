@@ -21,7 +21,7 @@
             {% for driver in drivers %}
                 <tr>
                     <td>{{ driver.id }}</td>
-                    <td>{{ driver.contact }}</td>
+                    <td class="font-monospace" style="white-space:pre-wrap;max-width:28rem;font-size:0.875rem;">{{ driver.contact|json_encode(constant('JSON_UNESCAPED_UNICODE')) }}</td>
                     <td>
                         <a href="{{ path('app_driver_show', {'id': driver.id}) }}">Voir</a>
                         <a href="{{ path('app_driver_edit', {'id': driver.id}) }}">Modifier</a>

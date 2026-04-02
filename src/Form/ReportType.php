@@ -22,7 +22,7 @@ class ReportType extends AbstractType
         $builder
             ->add('description', TextType::class)
             ->add('severity', TextType::class)
-            ->add('category', TextType::class)
+            ->add('situationType', TextType::class, ['label' => 'Situation type'])
             ->add('driver', EntityType::class, [
                 'class' => Driver::class,
                 'choice_label' => static fn (Driver $d): string => 'Driver #'.$d->getId(),
@@ -33,11 +33,21 @@ class ReportType extends AbstractType
                 'choice_label' => static fn (Bus $b): string => 'Bus #'.$b->getId(),
                 'placeholder' => '',
             ])
-            ->add('ReportDate', DateTimeType::class, [
+            ->add('reportDate', DateTimeType::class, [
                 'widget' => 'single_text',
                 'input' => 'datetime_immutable',
                 'label' => 'Report date',
             ])
+            ->add('incidentDate', DateTimeType::class, [
+                'widget' => 'single_text',
+                'input' => 'datetime_immutable',
+                'label' => 'Incident date',
+                'required' => false,
+            ])
+            ->add('aggravatingContext', TextareaType::class, ['label' => 'Aggravating context', 'required' => false])
+            ->add('mitigatingContext', TextareaType::class, ['label' => 'Mitigating context', 'required' => false])
+            ->add('situationSummary', TextareaType::class, ['label' => 'Situation summary', 'required' => false])
+            ->add('reportCredibility', TextType::class, ['label' => 'Report credibility', 'required' => false])
             ->add('reporterContact', TextareaType::class, [
                 'label' => 'Reporter contact (JSON)',
                 'required' => false,

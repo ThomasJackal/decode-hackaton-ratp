@@ -1,54 +1,192 @@
 {% set prefilled_bus_id = prefilled_bus_id|default(null) %}
 {% set form_action = prefilled_bus_id ? path('app_report_new', { busId: prefilled_bus_id }) : path('app_report_new') %}
+{% set bus_resolved_class = prefilled_bus_id ? 'report-submission-form--bus-resolved' : '' %}
 
 {{ form_start(form, { action: form_action, attr: {
-    class: 'report-submission-form',
+    class: 'report-submission-form ' ~ bus_resolved_class,
     'data-controller': 'report-bus-finder',
     'data-report-bus-finder-find-url-value': path('app_report_find_bus'),
     'data-report-bus-finder-csrf-token-value': csrf_token('report_find_bus'),
     'data-report-bus-finder-prefilled-bus-id-value': prefilled_bus_id ?? '',
 } }) }}
 
-    <div class="form-field-spaced">
-        {{ form_row(form.ReportDate) }}
-    </div>
+{{ form_errors(form) }}
 
-    <details
-        class="bus-finder{% if prefilled_bus_id %} bus-finder--resolved{% endif %}"
-        data-report-bus-finder-target="details"
-        {% if prefilled_bus_id is null %}open{% endif %}
-    >
-        <summary class="bus-finder__summary">Bus Finder</summary>
-        <div class="bus-finder__body">
-            {% if prefilled_bus_id %}
-                {{ form_row(form.busIdentifier) }}
-            {% else %}
-                {{ form_row(form.lineId) }}
-                {{ form_row(form.stopId) }}
-                {{ form_row(form.direction) }}
-                <button type="button" class="btn btn--secondary bus-finder__action" data-action="click->report-bus-finder#find">
-                    Trouver le bus
-                </button>
-            {% endif %}
-            <p class="bus-finder__message" data-report-bus-finder-target="message" role="status" aria-live="polite">
-                {% if prefilled_bus_id %}
-                    Bus n°{{ prefilled_bus_id }} est présélectionné (paramètre d’URL).
-                {% endif %}
-            </p>
-        </div>
-    </details>
+<div class="report-bus-identify-block{% if prefilled_bus_id %} is-collapsed{% endif %}" data-report-bus-finder-target="identifyBlock">
+	<div class="report-section-title">🚌 Identifier le bus</div>
 
-    <div class="form-field-spaced">
-        {{ form_row(form.description) }}
-    </div>
+	<div class="report-bus-identify-done" role="status" aria-live="polite">
+		<span class="report-bus-identify-done__icon" aria-hidden="true">✓</span>
+		<p class="report-bus-identify-done__text" data-report-bus-finder-target="identifyDoneText">
+			{% if prefilled_bus_id %}
+				Bus n°{{ prefilled_bus_id }}
+				— identifiant confirmé.
+			{% endif %}
+		</p>
+		<button type="button" class="report-bus-identify-done__edit" data-action="click->report-bus-finder#expandIdentify">
+			Modifier
+		</button>
+	</div>
 
-    <div class="form-field-spaced">
-        {{ form_row(form.reporterEmail) }}
-        {{ form_row(form.reporterTelephone) }}
-    </div>
+	<div class="report-bus-identify-tabs" data-report-bus-tabs>
+		<div class="report-tabs-nav" role="tablist" aria-label="Mode d’identification du bus">
+			<button type="button" class="report-tab-btn is-active" role="tab" aria-selected="true" aria-controls="report-bus-panel-manual" data-report-bus-tab="manual">
+				<span class="report-tab-btn__icon">📝</span>
+				<span>Formulaire</span>
+			</button>
+			<button type="button" class="report-tab-btn" role="tab" aria-selected="false" aria-controls="report-bus-panel-qr" data-report-bus-tab="qr">
+				<span class="report-tab-btn__icon">📱</span>
+				<span>QR code</span>
+				<span class="report-tab-badge">Rapide</span>
+			</button>
+			<button type="button" class="report-tab-btn" role="tab" aria-selected="false" aria-controls="report-bus-panel-call" data-report-bus-tab="call">
+				<span class="report-tab-btn__icon">📞</span>
+				<span>Appeler</span>
+			</button>
+		</div>
 
-    <div class="stack-actions" style="margin-top: 1.25rem;">
-        <button type="submit" class="btn">{{ button_label|default('Envoyer') }}</button>
-    </div>
+		<div id="report-bus-panel-manual" class="report-tab-panel is-active" role="tabpanel">
+			<div class="report-bus-card">
+				{% if prefilled_bus_id %}
+					<div class="report-field">
+						{{ form_label(form.busIdentifier, null, { label_attr: { class: 'report-field__label' } }) }}
+						{{ form_widget(form.busIdentifier, { attr: form.busIdentifier.vars.attr|merge({ class: 'report-field__input' }) }) }}
+						{{ form_errors(form.busIdentifier) }}
+					</div>
+				{% else %}
+					<div class="report-field">
+						{{ form_label(form.lineId, null, { label_attr: { class: 'report-field__label' } }) }}
+						{{ form_widget(form.lineId, { attr: form.lineId.vars.attr|merge({
+                                class: 'report-field__input',
+                                placeholder: 'Ex : 42, 91, 38…',
+                            }) }) }}
+						{{ form_errors(form.lineId) }}
+						{{ form_help(form.lineId) }}
+					</div>
+					<div class="report-field">
+						{{ form_label(form.direction, null, { label_attr: { class: 'report-field__label' } }) }}
+						{{ form_widget(form.direction, { attr: form.direction.vars.attr|merge({
+                                class: 'report-field__input',
+                                placeholder: 'Sens ou terminus',
+                            }) }) }}
+						{{ form_errors(form.direction) }}
+						{{ form_help(form.direction) }}
+					</div>
+					<div class="report-field">
+						{{ form_label(form.stopId, null, { label_attr: { class: 'report-field__label' } }) }}
+						{{ form_widget(form.stopId, { attr: form.stopId.vars.attr|merge({
+                                class: 'report-field__input',
+                                placeholder: 'Identifiant ou nom de l’arrêt',
+                            }) }) }}
+						{{ form_errors(form.stopId) }}
+						{{ form_help(form.stopId) }}
+					</div>
+					<button type="button" class="report-btn-find" data-action="click->report-bus-finder#find">
+						🔍 Trouver le bus
+					</button>
+				{% endif %}
+
+				<p class="report-bus-status bus-finder__message{% if prefilled_bus_id %} bus-finder__message--success{% else %} is-empty{% endif %}" data-report-bus-finder-target="message" role="status" aria-live="polite">
+					{% if prefilled_bus_id %}
+						Bus n°{{ prefilled_bus_id }}
+						est présélectionné (paramètre d’URL).
+					{% endif %}
+				</p>
+			</div>
+		</div>
+
+		<div id="report-bus-panel-qr" class="report-tab-panel" role="tabpanel" data-controller="report-qr-capture" data-report-qr-capture-report-new-url-value="{{ path('app_report_new') }}">
+			<p class="report-qr-lead">Photographiez le QR code dans le bus (caméra arrière recommandée) ou importez une image.</p>
+			<p class="report-qr-feedback" data-report-qr-capture-target="feedback" role="status" aria-live="polite"></p>
+			<div class="report-qr-actions">
+				<button type="button" class="report-btn-camera" data-action="click->report-qr-capture#openCamera">
+					<span aria-hidden="true">📷</span>
+					Prendre une photo
+				</button>
+				<button type="button" class="report-btn-camera report-btn-camera--secondary" data-action="click->report-qr-capture#openGallery">
+					<span aria-hidden="true">🖼</span>
+					Galerie
+				</button>
+			</div>
+			<label class="visually-hidden">
+				Caméra
+				<input type="file" accept="image/*" capture="environment" data-report-qr-capture-target="cameraInput" data-action="change->report-qr-capture#onCameraChange">
+			</label>
+			<label class="visually-hidden">
+				Fichier image
+				<input type="file" accept="image/*" data-report-qr-capture-target="galleryInput" data-action="change->report-qr-capture#onGalleryChange">
+			</label>
+		</div>
+
+		<div id="report-bus-panel-call" class="report-tab-panel" role="tabpanel">
+			<div class="report-call-inline">
+				<p class="report-call-lead">Signalement par téléphone : appelez le
+					<strong>3424</strong>
+					(non surtaxé).</p>
+				<p class="report-call-hours-inline">Lun–Ven 7h–21h · Sam 9h–18h · Dim &amp; fériés 10h–17h</p>
+				<a class="report-btn-call report-btn-call--inline" href="tel:3424">📞 Appeler le 3424</a>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="report-locked-after-bus">
+	<div class="report-description-primary">
+		<h2 class="report-description-primary__label" id="report-description-heading">Dites-nous ce qu’il s’est passé</h2>
+		<p class="report-description-primary__lead" id="report-description-hint">Expliquez ce qui s’est passé : le plus de détails possible nous aide à traiter votre retour.</p>
+		<div class="report-field report-field--schedule">
+			{{ form_label(form.reportDate, null, { label_attr: { class: 'report-field__label report-field__label--schedule' } }) }}
+			{{ form_widget(form.reportDate, { attr: form.reportDate.vars.attr|merge({ class: 'report-field__input report-field__input--schedule' }) }) }}
+			{{ form_errors(form.reportDate) }}
+		</div>
+		<div class="report-field report-field--description-body">
+			<div class="report-description-primary__field-head">
+				{{ form_label(form.description, null, { label_attr: { class: 'report-field__label report-field__label--schedule report-description-primary__sublabel' } }) }}
+				<button type="button" class="report-btn-speech" data-report-speech-target="toggle" aria-pressed="false" aria-label="Dicter le texte à la voix" title="Utilise le micro du navigateur (Chrome, Edge, Safari…)">
+					<span class="report-btn-speech__icon" aria-hidden="true">🎤</span>
+					<span class="report-btn-speech__text">Dicter</span>
+				</button>
+			</div>
+			<p class="report-btn-speech__status" data-report-speech-target="status" role="status" aria-live="polite"></p>
+			{{ form_widget(form.description, { attr: form.description.vars.attr|merge({
+                class: 'report-field__textarea report-field__textarea--hero',
+                placeholder: 'Ex. : à l’arrêt X, conducteur·rice peu cordial·e, porte bloquée, retard sur la ligne…',
+                'aria-describedby': 'report-description-heading report-description-hint',
+                'data-report-speech-target': 'textarea',
+            }) }) }}
+			{{ form_errors(form.description) }}
+		</div>
+	</div>
+
+	<section class="report-contact-optional" aria-labelledby="report-contact-heading">
+		<header class="report-contact-optional__head">
+			<span class="report-contact-optional__title" id="report-contact-heading">Contact</span>
+			<span class="report-contact-optional__badge">Optionnel</span>
+		</header>
+		<p class="report-contact-optional__text">En indiquant vos coordonnées, vous acceptez de recevoir des informations relatives à la prise en charge de votre signalement.</p>
+		<div class="report-contact-optional__fields">
+			<div class="report-field report-field--contact">
+				{{ form_label(form.reporterEmail, null, { label_attr: { class: 'report-field__label report-field__label--subtle' } }) }}
+				{{ form_widget(form.reporterEmail, { attr: form.reporterEmail.vars.attr|merge({
+                class: 'report-field__input report-field__input--contact',
+                placeholder: 'vous@exemple.com',
+            }) }) }}
+				{{ form_errors(form.reporterEmail) }}
+			</div>
+			<div class="report-field report-field--contact">
+				{{ form_label(form.reporterTelephone, null, { label_attr: { class: 'report-field__label report-field__label--subtle' } }) }}
+				{{ form_widget(form.reporterTelephone, { attr: form.reporterTelephone.vars.attr|merge({
+                class: 'report-field__input report-field__input--contact',
+                placeholder: '06 00 00 00 00',
+            }) }) }}
+				{{ form_errors(form.reporterTelephone) }}
+			</div>
+		</div>
+	</section>
+
+	<div class="report-stack-actions">
+		<button type="submit" class="report-btn-submit">{{ button_label|default('Envoyer le signalement') }}</button>
+	</div>
+</div>
 
 {{ form_end(form) }}

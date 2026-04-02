@@ -23,6 +23,18 @@ services:
       # - ./docker/db/data:/var/lib/postgresql/data:rw
 ###< doctrine/doctrine-bundle ###
 
+  # DB UI: http://localhost:8080 — set « Serveur » to `database` (Docker network), not 127.0.0.1.
+  # Same user/password/db as DATABASE_URL (defaults: app / !ChangeMe! / app).
+  adminer:
+    image: adminer:latest
+    networks:
+      - app
+    ports:
+      - "8080:8080"
+    depends_on:
+      database:
+        condition: service_healthy
+
   n8n:
     image: docker.n8n.io/n8nio/n8n
     networks:

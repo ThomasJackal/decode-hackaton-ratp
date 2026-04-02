@@ -3,56 +3,169 @@
 {% block title %}Signalement #{{ report.id }}{% endblock %}
 
 {% block body %}
-    <div class="page-intro">
-        <h1 class="page-title">Signalement #{{ report.id }}</h1>
-    </div>
+    {% set sev = report.severity|default('')|lower %}
+    {% set sev_class = {
+        'high': 'report-shortlist__severity--high',
+        'critical': 'report-shortlist__severity--critical',
+        'medium': 'report-shortlist__severity--medium',
+        'low': 'report-shortlist__severity--low',
+        'positive': 'report-shortlist__severity--low',
+    }[sev]|default('') %}
+    {% set rc = report.reporterContact is iterable ? report.reporterContact : {} %}
+    {% set driver_name = '' %}
+    {% if report.driver and report.driver.contact is iterable %}
+        {% set driver_name = report.driver.contact.name|default('') %}
+    {% endif %}
+    {% set meta = report.metadata is iterable ? report.metadata : {} %}
+    {% set finder = meta.finder is defined and meta.finder is iterable ? meta.finder : null %}
 
-    <div class="table-wrap">
-        <table class="table">
-            <tbody>
-                <tr>
-                    <th>Id</th>
-                    <td>{{ report.id }}</td>
-                </tr>
-                <tr>
-                    <th>Description</th>
-                    <td>{{ report.description }}</td>
-                </tr>
-                <tr>
-                    <th>Gravité</th>
-                    <td>{{ report.severity }}</td>
-                </tr>
-                <tr>
-                    <th>Catégorie</th>
-                    <td>{{ report.category }}</td>
-                </tr>
-                <tr>
-                    <th>Conducteur</th>
-                    <td>{{ report.driver ? '#' ~ report.driver.id : '—' }}</td>
-                </tr>
-                <tr>
-                    <th>Bus</th>
-                    <td>{{ report.bus ? '#' ~ report.bus.id : '—' }}</td>
-                </tr>
-                <tr>
-                    <th>Date du fait</th>
-                    <td>{{ report.reportDate ? report.reportDate|date('d/m/Y H:i T') : '—' }}</td>
-                </tr>
-                <tr>
-                    <th>Créé le</th>
-                    <td>{{ report.createdAt ? report.createdAt|date('d/m/Y H:i T') : '—' }}</td>
-                </tr>
-                <tr>
-                    <th>Contact déclarant</th>
-                    <td><pre class="mb-0" style="margin:0; white-space:pre-wrap; font:inherit;">{{ report.reporterContact|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+    <article class="report-detail" aria-labelledby="report-detail-title">
+        <header class="report-detail__header">
+            <div class="report-detail__heading">
+                <p class="report-detail__eyebrow">Fiche signalement · lecture seule</p>
+                <h1 class="page-title report-detail__title" id="report-detail-title">Signalement n°{{ report.id }}</h1>
+                <p class="report-detail__subtitle">
+                    <span class="report-detail__chip">{{ report.situationType }}</span>
+                    {% if report.incidentDate ?? report.reportDate %}
+                        {% set idate = report.incidentDate ?? report.reportDate %}
+                        <span class="report-detail__when">Incident le {{ idate|date('d/m/Y') }}, {{ idate|date('H:i') }}</span>
+                    {% endif %}
+                </p>
+            </div>
+            <div class="report-detail__badges">
+                <span class="report-shortlist__severity {{ sev_class }}" title="Gravité">{{ report.severity }}</span>
+                {% if report.reportCredibility|default('')|trim is not empty %}
+                    <span class="report-detail__chip report-detail__chip--meta" title="Crédibilité du signalement">{{ report.reportCredibility }}</span>
+                {% endif %}
+            </div>
+        </header>
 
-    <div class="stack-actions">
-        <a href="{{ path('app_report_index') }}" class="btn btn--secondary">Liste des signalements</a>
-        <a href="{{ path('app_report_edit', {'id': report.id}) }}" class="btn">Modifier</a>
-        {{ include('report/_delete_form.html.twig') }}
-    </div>
+        {% if report.situationSummary|default('')|trim is not empty %}
+            <p class="report-detail__summary" role="doc-subtitle">{{ report.situationSummary }}</p>
+        {% endif %}
+
+        <section class="report-detail__panel report-detail__panel--primary" aria-labelledby="report-desc-heading">
+            <h2 class="report-detail__panel-title" id="report-desc-heading">Compte rendu voyageur</h2>
+            <p class="report-detail__description">{{ report.description|nl2br }}</p>
+        </section>
+
+        {% if report.aggravatingContext|default('')|trim is not empty %}
+            <section class="report-detail__panel" aria-labelledby="report-ctx-aggravating-heading">
+                <h2 class="report-detail__panel-title" id="report-ctx-aggravating-heading">Contexte aggravant</h2>
+                <p class="report-detail__context">{{ report.aggravatingContext|nl2br }}</p>
+            </section>
+        {% endif %}
+        {% if report.mitigatingContext|default('')|trim is not empty %}
+            <section class="report-detail__panel" aria-labelledby="report-ctx-mitigating-heading">
+                <h2 class="report-detail__panel-title" id="report-ctx-mitigating-heading">Contexte atténuant</h2>
+                <p class="report-detail__context">{{ report.mitigatingContext|nl2br }}</p>
+            </section>
+        {% endif %}
+
+        <div class="report-detail__grid">
+            <section class="report-detail__panel" aria-labelledby="report-trip-heading">
+                <h2 class="report-detail__panel-title" id="report-trip-heading">Circuit &amp; calendrier</h2>
+                <dl class="report-detail-kv">
+                    <div class="report-detail-kv__row">
+                        <dt>Date / heure du signalement</dt>
+                        <dd>{{ report.reportDate ? report.reportDate|date('d/m/Y H:i') : '—' }}</dd>
+                    </div>
+                    <div class="report-detail-kv__row">
+                        <dt>Date / heure de l’incident</dt>
+                        <dd>{{ report.incidentDate ? report.incidentDate|date('d/m/Y H:i') : '—' }}</dd>
+                    </div>
+                    <div class="report-detail-kv__row">
+                        <dt>Enregistré le</dt>
+                        <dd>{{ report.createdAt ? report.createdAt|date('d/m/Y H:i') : '—' }}</dd>
+                    </div>
+                    <div class="report-detail-kv__row">
+                        <dt>Bus concerné</dt>
+                        <dd>
+                            {% if report.bus %}
+                                Véhicule n°{{ report.bus.id }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </dd>
+                    </div>
+                    <div class="report-detail-kv__row">
+                        <dt>Conducteur affecté</dt>
+                        <dd>
+                            {% if report.driver %}
+                                {% if driver_name %}
+                                    {{ driver_name }}
+                                    <span class="report-detail-kv__meta">(#{{ report.driver.id }})</span>
+                                {% else %}
+                                    Conducteur n°{{ report.driver.id }}
+                                {% endif %}
+                                <div class="report-detail-kv__action">
+                                    <a href="{{ path('app_driver_show', { id: report.driver.id }) }}">Voir la fiche conducteur</a>
+                                </div>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </dd>
+                    </div>
+                </dl>
+            </section>
+
+            <section class="report-detail__panel" aria-labelledby="report-contact-heading">
+                <h2 class="report-detail__panel-title" id="report-contact-heading">Contact du déclarant</h2>
+                {% if rc is iterable and (rc.email|default('')|trim or rc.telephone|default('')|trim or rc.name|default('')|trim) %}
+                    <dl class="report-detail-kv">
+                        {% if rc.name|default('')|trim is not empty %}
+                            <div class="report-detail-kv__row">
+                                <dt>Nom ou pseudo</dt>
+                                <dd>{{ rc.name }}</dd>
+                            </div>
+                        {% endif %}
+                        {% if rc.email|default('')|trim is not empty %}
+                            <div class="report-detail-kv__row">
+                                <dt>E-mail</dt>
+                                <dd><a href="mailto:{{ rc.email|e('html_attr') }}">{{ rc.email }}</a></dd>
+                            </div>
+                        {% endif %}
+                        {% if rc.telephone|default('')|trim is not empty %}
+                            <div class="report-detail-kv__row">
+                                <dt>Téléphone</dt>
+                                <dd><a href="tel:{{ rc.telephone|replace({' ': '', '.': '', '-': ''}) }}">{{ rc.telephone }}</a></dd>
+                            </div>
+                        {% endif %}
+                    </dl>
+                {% else %}
+                    <p class="report-detail__empty">Aucun contact renseigné.</p>
+                {% endif %}
+            </section>
+        </div>
+
+        {% if finder %}
+            <details class="report-detail__meta-details">
+                <summary>Détails techniques (corrélation bus / trajet)</summary>
+                <div class="report-detail__meta-body">
+                    {% if finder.lineId is defined %}
+                        <p><strong>Ligne</strong> {{ finder.lineId }}</p>
+                    {% endif %}
+                    {% if finder.stopId is defined %}
+                        <p><strong>Arrêt</strong> {{ finder.stopId }}</p>
+                    {% endif %}
+                    {% if finder.direction is defined %}
+                        <p><strong>Direction</strong> {{ finder.direction }}</p>
+                    {% endif %}
+                    {% if finder.source is defined %}
+                        <p><strong>Source résolution</strong> {{ finder.source }}</p>
+                    {% endif %}
+                    <p class="report-detail__meta-hint">Données issues du résolveur au moment du signalement ; la fiche elle-même n’est pas modifiable.</p>
+                </div>
+            </details>
+        {% elseif meta is not empty %}
+            <details class="report-detail__meta-details">
+                <summary>Métadonnées</summary>
+                <pre class="report-detail__pre">{{ meta|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+            </details>
+        {% endif %}
+
+        <div class="stack-actions report-detail__actions">
+            <a href="{{ path('app_report_index') }}" class="btn btn--secondary">← Liste des signalements</a>
+        </div>
+    </article>
 {% endblock %}

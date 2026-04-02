@@ -41,7 +41,7 @@ final class DashboardController extends AbstractController
             'reports_last_7_days' => $reportRepository->countCreatedSince($since7d),
             'reports_last_30_days' => $reportRepository->countCreatedSince($since30d),
             'severity_breakdown_30d' => $reportRepository->countBySeverity($since30d),
-            'category_breakdown_30d' => $reportRepository->countTopCategories($since30d, 8),
+            'situation_type_breakdown_30d' => $reportRepository->countTopSituationTypes($since30d, 8),
             'dashboard_reports' => $dashboardReports,
             'dashboard_page' => $page,
             'dashboard_total_pages' => $totalPages,

@@ -9,7 +9,7 @@ final class FinderService implements FinderServiceInterface
     public function findDriverByBus(string $busId, string $time): array
     {
         return [
-            'driverId' => 1,
+            'driverId' => 6,
         ];
     }
 

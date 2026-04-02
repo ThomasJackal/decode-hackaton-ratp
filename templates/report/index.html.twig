@@ -5,7 +5,7 @@
 {% block body %}
     <div class="page-intro">
         <h1 class="page-title">Signalements</h1>
-        <p class="page-subtitle">Liste paginée avec filtres par période, gravité, catégorie, conducteur ou bus.</p>
+        <p class="page-subtitle">Liste paginée avec filtres par période, gravité, type de situation, conducteur ou bus. Cliquez sur une ligne pour ouvrir la fiche (lecture seule).</p>
     </div>
 
     <section class="panel report-filters" aria-labelledby="report-filters-heading">
@@ -32,11 +32,11 @@
                     </select>
                 </div>
                 <div class="form-field-spaced mb-0">
-                    <label for="filter-category">Catégorie</label>
-                    <select id="filter-category" name="category">
-                        <option value="">Toutes</option>
-                        {% for c in category_options %}
-                            <option value="{{ c }}" {{ filter_category == c ? 'selected' }}>{{ c }}</option>
+                    <label for="filter-situation-type">Type de situation</label>
+                    <select id="filter-situation-type" name="situation_type">
+                        <option value="">Tous</option>
+                        {% for c in situation_type_options %}
+                            <option value="{{ c }}" {{ filter_situation_type == c ? 'selected' }}>{{ c }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -65,39 +65,48 @@
     </p>
 
     <div class="table-wrap">
-        <table class="table">
+        <table class="table report-list-table" data-controller="report-list-rows">
             <thead>
                 <tr>
                     <th scope="col">Id</th>
                     <th scope="col">Description</th>
                     <th scope="col">Gravité</th>
-                    <th scope="col">Catégorie</th>
+                    <th scope="col">Type de situation</th>
                     <th scope="col">Conducteur</th>
                     <th scope="col">Bus</th>
                     <th scope="col">Date du fait</th>
                     <th scope="col">Créé le</th>
-                    <th scope="col">Actions</th>
                 </tr>
             </thead>
             <tbody>
             {% for report in reports %}
-                <tr>
-                    <td>{{ report.id }}</td>
+                {% set show_url = path('app_report_show', { id: report.id }) %}
+                <tr
+                    class="report-list-row"
+                    data-report-href="{{ show_url }}"
+                    tabindex="0"
+                    aria-label="Ouvrir le signalement n°{{ report.id }}"
+                >
+                    <td><span class="report-list-row__id">{{ report.id }}</span></td>
                     <td>{{ report.description|length > 120 ? report.description|slice(0, 120) ~ '…' : report.description }}</td>
-                    <td>{{ report.severity }}</td>
-                    <td>{{ report.category }}</td>
+                    <td>
+                        <span class="report-shortlist__severity {{ {
+                            'high': 'report-shortlist__severity--high',
+                            'critical': 'report-shortlist__severity--critical',
+                            'medium': 'report-shortlist__severity--medium',
+                            'low': 'report-shortlist__severity--low',
+                            'positive': 'report-shortlist__severity--low',
+                        }[report.severity|default('')|lower]|default('') }}">{{ report.severity }}</span>
+                    </td>
+                    <td>{{ report.situationType }}</td>
                     <td>{{ report.driver ? '#' ~ report.driver.id : '—' }}</td>
                     <td>{{ report.bus ? '#' ~ report.bus.id : '—' }}</td>
-                    <td>{{ report.reportDate ? report.reportDate|date('d/m/Y H:i') : '—' }}</td>
+                    <td>{% set tripWhen = report.incidentDate ?? report.reportDate %}{{ tripWhen ? tripWhen|date('d/m/Y H:i') : '—' }}</td>
                     <td>{{ report.createdAt ? report.createdAt|date('d/m/Y H:i') : '—' }}</td>
-                    <td>
-                        <a href="{{ path('app_report_show', {'id': report.id}) }}">Voir</a>
-                        <a href="{{ path('app_report_edit', {'id': report.id}) }}">Modifier</a>
-                    </td>
                 </tr>
             {% else %}
                 <tr>
-                    <td colspan="9">Aucun signalement à afficher.</td>
+                    <td colspan="8">Aucun signalement à afficher.</td>
                 </tr>
             {% endfor %}
             </tbody>

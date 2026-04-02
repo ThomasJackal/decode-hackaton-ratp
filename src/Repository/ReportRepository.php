@@ -45,13 +45,13 @@ class ReportRepository extends ServiceEntityRepository
     }
 
     /**
-     * @return list<array{category: string|null, cnt: int|string}>
+     * @return list<array{situation_type: string|null, cnt: int|string}>
      */
-    public function countTopCategories(?\DateTimeImmutable $since = null, int $limit = 8): array
+    public function countTopSituationTypes(?\DateTimeImmutable $since = null, int $limit = 8): array
     {
         $qb = $this->createQueryBuilder('r')
-            ->select('r.category AS category', 'COUNT(r.id) AS cnt')
-            ->groupBy('r.category')
+            ->select('r.situationType AS situation_type', 'COUNT(r.id) AS cnt')
+            ->groupBy('r.situationType')
             ->orderBy('cnt', 'DESC')
             ->setMaxResults($limit);
 
@@ -77,12 +77,12 @@ class ReportRepository extends ServiceEntityRepository
     public function countManagementFiltered(
         ?\DateTimeImmutable $since = null,
         ?string $severity = null,
-        ?string $category = null,
+        ?string $situationType = null,
         ?int $driverId = null,
         ?int $busId = null,
     ): int {
         $qb = $this->createQueryBuilder('r')->select('COUNT(r.id)');
-        $this->applyManagementFilters($qb, $since, $severity, $category, $driverId, $busId);
+        $this->applyManagementFilters($qb, $since, $severity, $situationType, $driverId, $busId);
 
         return (int) $qb->getQuery()->getSingleScalarResult();
     }
@@ -93,14 +93,14 @@ class ReportRepository extends ServiceEntityRepository
     public function findManagementFiltered(
         ?\DateTimeImmutable $since = null,
         ?string $severity = null,
-        ?string $category = null,
+        ?string $situationType = null,
         ?int $driverId = null,
         ?int $busId = null,
         int $limit = 25,
         int $offset = 0,
     ): array {
         $qb = $this->managementListQueryBuilder();
-        $this->applyManagementFilters($qb, $since, $severity, $category, $driverId, $busId);
+        $this->applyManagementFilters($qb, $since, $severity, $situationType, $driverId, $busId);
         $qb->setFirstResult($offset)->setMaxResults($limit);
 
         return $qb->getQuery()->getResult();
@@ -132,10 +132,10 @@ class ReportRepository extends ServiceEntityRepository
     /**
      * @return list<string>
      */
-    public function findDistinctCategoryValues(): array
+    public function findDistinctSituationTypeValues(): array
     {
         $rows = $this->createQueryBuilder('r')
-            ->select('r.category AS v')
+            ->select('r.situationType AS v')
             ->distinct()
             ->orderBy('v', 'ASC')
             ->getQuery()
@@ -148,7 +148,7 @@ class ReportRepository extends ServiceEntityRepository
         QueryBuilder $qb,
         ?\DateTimeImmutable $since,
         ?string $severity,
-        ?string $category,
+        ?string $situationType,
         ?int $driverId,
         ?int $busId,
     ): void {
@@ -158,8 +158,8 @@ class ReportRepository extends ServiceEntityRepository
         if (null !== $severity && '' !== $severity) {
             $qb->andWhere('r.severity = :severity')->setParameter('severity', $severity);
         }
-        if (null !== $category && '' !== $category) {
-            $qb->andWhere('r.category = :category')->setParameter('category', $category);
+        if (null !== $situationType && '' !== $situationType) {
+            $qb->andWhere('r.situationType = :situationType')->setParameter('situationType', $situationType);
         }
         if (null !== $driverId) {
             $qb->andWhere('d.id = :driverId')->setParameter('driverId', $driverId);

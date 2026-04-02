@@ -1,4 +1,8 @@
 import './stimulus_bootstrap.js';
+import { initReportSpeech } from './report_speech.js';
+
+initReportSpeech();
+
 /*
  * Welcome to your app's main JavaScript file!
  *

@@ -5,7 +5,7 @@
 {% block body %}
     <div class="page-intro">
         <h1 class="page-title">Tableau de bord</h1>
-        <p class="page-subtitle">Vue d’ensemble des signalements : volumes récents, répartition par gravité et par catégorie, accès rapide au détail et aux filtres de la liste.</p>
+        <p class="page-subtitle">Vue d’ensemble des signalements : volumes récents, répartition par gravité et par type de situation, accès rapide au détail et aux filtres de la liste.</p>
     </div>
 
     <section class="stat-grid" aria-label="Indicateurs principaux">
@@ -58,17 +58,17 @@
         </div>
         <div class="panel">
             <div class="panel__header">
-                <h2 class="panel__title">Catégories les plus fréquentes (30&nbsp;j.)</h2>
+                <h2 class="panel__title">Types de situation les plus fréquents (30&nbsp;j.)</h2>
                 <a href="{{ path('app_report_index', { period: '30d' }) }}" class="panel__action">Tout voir</a>
             </div>
-            {% if category_breakdown_30d is empty %}
+            {% if situation_type_breakdown_30d is empty %}
                 <p class="panel__empty">Aucun signalement sur les 30 derniers jours.</p>
             {% else %}
                 <ol class="breakdown-list breakdown-list--ranked" role="list">
-                    {% for row in category_breakdown_30d %}
+                    {% for row in situation_type_breakdown_30d %}
                         <li class="breakdown-list__item">
-                            <a href="{{ path('app_report_index', { period: '30d', category: row.category }) }}" class="breakdown-list__link">
-                                <span class="breakdown-list__label">{{ row.category }}</span>
+                            <a href="{{ path('app_report_index', { period: '30d', situation_type: row.situation_type }) }}" class="breakdown-list__link">
+                                <span class="breakdown-list__label">{{ row.situation_type }}</span>
                                 <span class="breakdown-list__count">{{ row.cnt }}</span>
                             </a>
                         </li>
@@ -101,7 +101,7 @@
                         <tr>
                             <th scope="col">Créé le</th>
                             <th scope="col">Gravité</th>
-                            <th scope="col">Catégorie</th>
+                            <th scope="col">Type de situation</th>
                             <th scope="col">Résumé</th>
                             <th scope="col">Conducteur</th>
                             <th scope="col">Bus</th>
@@ -119,9 +119,9 @@
                                 <td>
                                     <span class="report-shortlist__severity report-shortlist__severity--{{ report.severity|default('')|lower }}">{{ report.severity }}</span>
                                 </td>
-                                <td>{{ report.category }}</td>
+                                <td>{{ report.situationType }}</td>
                                 <td>
-                                    {% set text = report.summary ?: report.description %}
+                                    {% set text = report.situationSummary ?: report.description %}
                                     {{ text|length > 90 ? text|slice(0, 90) ~ '…' : text }}
                                 </td>
                                 <td>

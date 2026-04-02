@@ -26,11 +26,10 @@ class ReportSubmissionType extends AbstractType
         }
 
         $builder
-            ->add('ReportDate', DateTimeType::class, [
+            ->add('reportDate', DateTimeType::class, [
                 'widget' => 'single_text',
                 'input' => 'datetime_immutable',
                 'label' => 'Date et heure du trajet',
-                'help' => 'Par défaut : maintenant. Ajustez si le fait concerne un autre moment.',
             ]);
 
         if ($fromUrl) {
@@ -68,17 +67,16 @@ class ReportSubmissionType extends AbstractType
 
         $builder
             ->add('description', TextareaType::class, [
-                'label' => 'Faites votre retour',
-                'help' => 'Décrivez ce que vous souhaitez signaler.',
-                'attr' => ['rows' => 6],
-                'constraints' => [new NotBlank(message: 'Veuillez saisir votre retour.')],
+                'label' => 'Description du signalement',
+                'attr' => ['rows' => 8],
+                'constraints' => [new NotBlank(message: 'Veuillez décrire le signalement.')],
             ])
             ->add('reporterEmail', EmailType::class, [
                 'mapped' => false,
-                'label' => 'Votre e-mail',
+                'required' => false,
+                'label' => 'E-mail',
                 'attr' => ['autocomplete' => 'email'],
                 'constraints' => [
-                    new NotBlank(message: 'L’e-mail est obligatoire.'),
                     new Email(message: 'Adresse e-mail invalide.'),
                 ],
             ])
@@ -87,7 +85,6 @@ class ReportSubmissionType extends AbstractType
                 'label' => 'Téléphone',
                 'required' => false,
                 'attr' => ['autocomplete' => 'tel'],
-                'help' => 'Optionnel pour vous recontacter.',
             ]);
     }
 
