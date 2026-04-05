@@ -1,0 +1,344 @@
+﻿{
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "signalement",
+                "options": {}
+            },
+            "id": "bad842b2-f16f-4687-9739-11b9f615f31d",
+            "name": "Webhook - Réception Signalement",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2,
+            "position": [
+                -160,
+                96
+            ],
+            "webhookId": "ratp-signalement"
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "INSERT INTO report (\n    driver_id, \n    bus_id, \n    description, \n    severity, \n    situation_type, \n    created_at, \n    report_date, \n    incident_date, \n    reporter_contact, \n    situation_summary, \n    metadata, \n    aggravating_context, \n    mitigating_context, \n    report_credibility,\n    closure_reason\n) VALUES (\n    {{ $json.output.driver_id }},\n    {{ $json.output.bus_id }},\n    '{{ $json.output.description.replace(/'/g, \"''\") }}',\n    '{{ $json.output.severity }}',\n    '{{ $json.output.situation_type.replace(/'/g, \"''\") }}',\n    NOW(),\n    '{{ $json.output.report_date }}'::timestamp,\n    '{{ $json.output.incident_date }}'::timestamp,\n    '{{ JSON.stringify($json.output.reporter_contact) }}'::jsonb,\n    '{{ $json.output.situation_summary.replace(/'/g, \"''\") }}',\n    '{}'::jsonb,\n    '{{ $json.output.aggraving_context.replace(/'/g, \"''\") }}',\n    '{{ $json.output.mitigating_context.replace(/'/g, \"''\") }}',\n    '{{ $json.output.report_credibility }}',\n    '{{ $json.output.suggested_closure_reason }}'\n)\nRETURNING *;",
+                "options": {}
+            },
+            "id": "3f5bfd1d-a88c-49dc-811b-493b6bc61d9d",
+            "name": "PostgreSQL - Sauvegarder report",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 2,
+            "position": [
+                816,
+                96
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "RBCoYDzS6wEsCYZG",
+                    "name": "Postgres account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "=Tu es un expert RH de la RATP. Analyse ce signalement et retourne UNIQUEMENT un JSON valide sans markdown ni backticks. Ton objectif est de comprendre le signalement de l'utilisateur et d'enrichir le contexte. Attention, l'utilisateur peut-être de bonne foi mais aussi malveillant, alors essayee de vérifier ses information, son identité, etc pour savoir si son témoignage est de confiance. Tu à obligation de déterminer une valeur de sévérité et de classer ce signalement dans une catégory. Pour la sévérité, analyse les facteurs aggravant et atténuant, afin de comprendre au mieux la situation.\nPense à chercher des informations sur les précédents rapport concernant le conducteur, afin de comprendre si c'est un comportement récurent ou unique.\nEnfin, fait un résumé en une phrase de la situation, et fait une suggestion de raison de cloture de signalement pour le manager.\n\nINPUT: \n{{ JSON.stringify($json.body) }}\n\nOUTPUT SCHEMA:\n{\n  \"type\": \"object\",\n  \"required\": [\n    \"driver_id\",\n    \"bus_id\",\n    \"description\",\n    \"report_date\",\n    \"incident_date\",\n    \"reporter_contact\",\n    \"situation_type\",\n    \"aggraving_context\",\n    \"mitigating_context\",\n    \"report_credibility\",\n    \"situation_summary\",\n    \"severity\",\n    \"suggested_closure_reason\"\n  ],\n  \"properties\": {\n    \"driver_id\": {\n      \"type\": \"integer\"\n    },\n    \"bus_id\": {\n      \"type\": \"integer\"\n    },\n    \"description\": {\n      \"type\": \"string\"\n    },\n    \"report_date\": {\n      \"type\": \"string\",\n      \"format\": \"date-time\"\n    },\n    \"incident_date\": {\n      \"type\": \"string\",\n      \"format\": \"date-time\"\n    },\n    \"reporter_contact\": {\n      \"type\": \"object\",\n      \"description\": \"Informations de contact du signalant\"\n    },\n    \"situation_type\": {\n      \"type\": \"string\",\n      \"description\": \"Type de situation signalée (ex: refus d'accès, comportement inapproprié, accident, etc.)\"\n    },\n    \"aggraving_context\": {\n      \"type\": \"string\",\n      \"description\": \"Contexte aggravant identifié selon les règles métier (ex: plusieurs signalements dans les 12 derniers mois)\"\n    },\n    \"mitigating_context\": {\n      \"type\": \"string\",\n      \"description\": \"Contexte atténuant identifié selon les règles métier (ex: météo difficile, heure de pointe)\"\n    },\n    \"report_credibility\": {\n      \"type\": \"string\",\n      \"enum\": [\"low\", \"medium\", \"high\"],\n      \"description\": \"Crédibilité perçue du signalement\"\n    },\n    \"situation_summary\": {\n      \"type\": \"string\",\n      \"description\": \"Résumé synthétique du signalement et contexte\"\n    },\n    \"severity\": {\n      \"type\": \"string\",\n      \"enum\": [\"low\", \"medium\", \"high\", \"critical\"],\n      \"description\": \"Gravité de la situation après analyse selon les règles métier\"\n    },\n    \"suggested_closure_reason\": {\n      \"type\": \"string\",\n      \"description\": \"Raison suggérée pour la clôture du signalement (ex: manque de preuves, problème résolu, doublon, hors périmètre, etc.)\"\n    },\n    \"metadata\": {\n      \"type\": \"object\",\n      \"description\": \"Informations additionnelles ou métadonnées liées au signalement\"\n    }\n  },\n  \"additionalProperties\": false\n}\n\nRéponds **uniquement** par un objet JSON valide respectant exactement le schéma suivant, sans aucun texte supplémentaire ni explication.\n\n",
+                "hasOutputParser": true,
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 3,
+            "position": [
+                304,
+                96
+            ],
+            "id": "47ca3cd9-3531-4aa5-b158-d21899f5b53c",
+            "name": "AI Agent",
+            "retryOnFail": false,
+            "waitBetweenTries": 5000
+        },
+        {
+            "parameters": {
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+            "typeVersion": 1,
+            "position": [
+                64,
+                576
+            ],
+            "id": "d181149d-8634-40b3-9fb1-d076c42b6aef",
+            "name": "Google Gemini Chat Model",
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "LMACqGR3tt5C2QQG",
+                    "name": "Google Gemini(PaLM) Api account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "descriptionType": "manual",
+                "toolDescription": "utilise-le pour obtenir la météo actuelle à Paris au moment de l'incident",
+                "cityName": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('City', ``, 'string') }}"
+            },
+            "type": "n8n-nodes-base.openWeatherMapTool",
+            "typeVersion": 1,
+            "position": [
+                400,
+                416
+            ],
+            "id": "5d93beeb-d940-4f74-9774-a69dd78db2fa",
+            "name": "OpenWeatherMap",
+            "credentials": {
+                "openWeatherMapApi": {
+                    "id": "JRPWATdb5l8qIGx7",
+                    "name": "OpenWeatherMap account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "sessionIdType": "customKey",
+                "sessionKey": "={{ $('Webhook - Réception Signalement').item.json.body.driver_id }}"
+            },
+            "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+            "typeVersion": 1.3,
+            "position": [
+                256,
+                416
+            ],
+            "id": "3e32f93e-9b9a-4b0c-b5b8-2142df3c75bf",
+            "name": "Simple Memory"
+        },
+        {
+            "parameters": {
+                "schemaType": "manual",
+                "inputSchema": "{\n  \"type\": \"object\",\n  \"required\": [\n    \"driver_id\",\n    \"bus_id\",\n    \"description\",\n    \"report_date\",\n    \"incident_date\",\n    \"reporter_contact\",\n    \"situation_type\",\n    \"aggraving_context\",\n    \"mitigating_context\",\n    \"report_credibility\",\n    \"situation_summary\",\n    \"severity\",\n    \"suggested_closure_reason\"\n  ],\n  \"properties\": {\n    \"driver_id\": {\n      \"type\": \"integer\"\n    },\n    \"bus_id\": {\n      \"type\": \"integer\"\n    },\n    \"description\": {\n      \"type\": \"string\"\n    },\n    \"report_date\": {\n      \"type\": \"string\",\n      \"format\": \"date-time\"\n    },\n    \"incident_date\": {\n      \"type\": \"string\",\n      \"format\": \"date-time\"\n    },\n    \"reporter_contact\": {\n      \"type\": \"object\",\n      \"description\": \"Informations de contact du signalant\"\n    },\n    \"situation_type\": {\n      \"type\": \"string\",\n      \"description\": \"Type de situation signalée (ex: refus d'accès, comportement inapproprié, accident, etc.)\"\n    },\n    \"aggraving_context\": {\n      \"type\": \"string\",\n      \"description\": \"Contexte aggravant identifié selon les règles métier (ex: plusieurs signalements dans les 12 derniers mois)\"\n    },\n    \"mitigating_context\": {\n      \"type\": \"string\",\n      \"description\": \"Contexte atténuant identifié selon les règles métier (ex: météo difficile, heure de pointe)\"\n    },\n    \"report_credibility\": {\n      \"type\": \"string\",\n      \"enum\": [\"low\", \"medium\", \"high\"],\n      \"description\": \"Crédibilité perçue du signalement\"\n    },\n    \"situation_summary\": {\n      \"type\": \"string\",\n      \"description\": \"Résumé synthétique du signalement et contexte\"\n    },\n    \"severity\": {\n      \"type\": \"string\",\n      \"enum\": [\"low\", \"medium\", \"high\", \"critical\"],\n      \"description\": \"Gravité de la situation après analyse selon les règles métier\"\n    },\n    \"suggested_closure_reason\": {\n      \"type\": \"string\",\n      \"description\": \"Raison suggérée pour la clôture du signalement (ex: manque de preuves, problème résolu, doublon, hors périmètre, etc.)\"\n    },\n    \"metadata\": {\n      \"type\": \"object\",\n      \"description\": \"Informations additionnelles ou métadonnées liées au signalement\"\n    }\n  },\n  \"additionalProperties\": false\n}",
+                "autoFix": true
+            },
+            "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+            "typeVersion": 1.3,
+            "position": [
+                672,
+                480
+            ],
+            "id": "8baef161-f453-4c91-9549-4a75bea2f341",
+            "name": "Structured Output Parser"
+        },
+        {
+            "parameters": {
+                "fromEmail": "thomas.duron@ecole-decode.fr",
+                "toEmail": "thomas.duron@ecole-decode.fr",
+                "subject": "=⚠️ Alerte urgente – Signalement grave détecté",
+                "html": "=<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n  <meta charset=\"UTF-8\">\n  <title>Alerte RH - Signalement grave</title>\n  <style>\n    body {\n      font-family: Arial, sans-serif;\n      background-color: #F2F2F2;\n      margin: 0;\n      padding: 0;\n    }\n    .container {\n      max-width: 600px;\n      margin: 30px auto;\n      background-color: #ffffff;\n      border-radius: 8px;\n      overflow: hidden;\n      box-shadow: 0 2px 8px rgba(0,0,0,0.1);\n    }\n    .header {\n      background-color: #003366; /* bleu RATP */\n      color: #ffffff;\n      padding: 20px;\n      text-align: center;\n      font-size: 20px;\n      font-weight: bold;\n    }\n    .content {\n      padding: 20px;\n      color: #333333;\n      line-height: 1.5;\n    }\n    .alert-box {\n      background-color: #E6F4EA; /* vert très clair */\n      border-left: 5px solid #78BE20; /* vert RATP */\n      padding: 15px;\n      margin: 20px 0;\n      font-weight: bold;\n      color: #003366;\n    }\n    .details {\n      margin: 20px 0;\n      width: 100%;\n      border-collapse: collapse;\n    }\n    .details td {\n      padding: 8px 0;\n      vertical-align: top;\n    }\n    .details td:first-child {\n      font-weight: bold;\n      width: 150px;\n      color: #003366;\n    }\n    .footer {\n      background-color: #F2F2F2;\n      padding: 15px;\n      font-size: 12px;\n      color: #666666;\n      text-align: center;\n    }\n    .button {\n      display: inline-block;\n      margin-top: 20px;\n      padding: 12px 18px;\n      background-color: #78BE20; /* vert RATP */\n      color: #ffffff;\n      text-decoration: none;\n      border-radius: 5px;\n      font-weight: bold;\n    }\n    .severity {\n      color: #C00000; /* rouge pour gravité */\n      font-weight: bold;\n    }\n  </style>\n</head>\n<body>\n\n  <div class=\"container\">\n\n    <div class=\"header\">\n      ⚠️ Alerte critique – Intervention RH requise\n    </div>\n\n    <div class=\"content\">\n      \n      <p>Bonjour,</p>\n\n      <p>\n        Le système d’analyse automatique a détecté un <strong>signalement de gravité élevée</strong> nécessitant une prise en charge immédiate.\n      </p>\n\n      <div class=\"alert-box\">\n        Ce niveau d’alerte est déclenché uniquement dans des situations critiques pouvant engager la sécurité des personnes ou la responsabilité de l’entreprise.\n      </div>\n\n      <table class=\"details\">\n        <tr>\n          <td>Site :</td>\n          <td>[ParisEst – Centre Bus]</td>\n        </tr>\n        <tr>\n          <td>Date du signalement :</td>\n          <td>{{ $json.report_date }}</td>\n        </tr>\n        <tr>\n          <td>Type d’incident :</td>\n          <td>{{ $json.situation_type }}</td>\n        </tr>\n        <tr>\n          <td>Niveau de gravité :</td>\n          <td class=\"severity\">{{ $json.severity }}</td>\n        </tr>\n        <tr>\n          <td>Résumé :</td>\n          <td>{{ $json.situation_summary }}</td>\n        </tr>\n      </table>\n\n      <p>\n        Nous vous recommandons de <strong>consulter immédiatement le dossier complet</strong> et d’initier les actions nécessaires dans les plus brefs délais.\n      </p>\n\n      <a href=\"https://thomas-duron.decode.school/report/{{ $json.id }}\" class=\"button\">\n        Accéder au signalement\n      </a>\n\n      <p style=\"margin-top:20px;\">\n        Si vous estimez que cette alerte nécessite une escalade, merci de suivre les procédures internes en vigueur.\n      </p>\n\n    </div>\n\n    <div class=\"footer\">\n      Ce message est généré automatiquement par le système d’analyse – Groupe RATP<br>\n      Merci de ne pas répondre directement à cet email.\n    </div>\n\n  </div>\n\n</body>\n</html>",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.emailSend",
+            "typeVersion": 2.1,
+            "position": [
+                1232,
+                80
+            ],
+            "id": "3b085bf7-be1e-4a09-9405-30de1324357a",
+            "name": "Send email",
+            "webhookId": "69a35b14-f06f-47f5-8242-afe259e20841",
+            "credentials": {
+                "smtp": {
+                    "id": "tfSBTB7mZx3EIrFJ",
+                    "name": "SMTP account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict",
+                        "version": 1
+                    },
+                    "conditions": [
+                        {
+                            "id": "cond-1",
+                            "leftValue": "={{ $json.severity }}",
+                            "rightValue": "critical",
+                            "operator": {
+                                "type": "string",
+                                "operation": "equals"
+                            }
+                        },
+                        {
+                            "id": "e1a341bc-eeec-473a-b9b6-05852197d1a1",
+                            "leftValue": "={{ $json.severity }}",
+                            "rightValue": "high",
+                            "operator": {
+                                "type": "string",
+                                "operation": "equals",
+                                "name": "filter.operator.equals"
+                            }
+                        }
+                    ],
+                    "combinator": "or"
+                },
+                "options": {}
+            },
+            "id": "fb3ef5f9-a62a-44f7-b1fe-1f550bb560ae",
+            "name": "IF - Gravité élevée",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                1008,
+                96
+            ]
+        },
+        {
+            "parameters": {
+                "descriptionType": "manual",
+                "toolDescription": "utilise-le pour récupérer l'historique du conducteur, du bus, ou des informations de transit dans la table 'report'.",
+                "operation": "select",
+                "schema": {
+                    "__rl": true,
+                    "mode": "list",
+                    "value": "public"
+                },
+                "table": {
+                    "__rl": true,
+                    "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Table', ``, 'string') }}",
+                    "mode": "name"
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.postgresTool",
+            "typeVersion": 2.6,
+            "position": [
+                544,
+                416
+            ],
+            "id": "b39e5625-c71a-4ba4-a1eb-ab32620e9bbd",
+            "name": "History tool",
+            "credentials": {
+                "postgres": {
+                    "id": "RBCoYDzS6wEsCYZG",
+                    "name": "Postgres account"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Webhook - Réception Signalement": {
+            "main": [
+                [
+                    {
+                        "node": "AI Agent",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "PostgreSQL - Sauvegarder report": {
+            "main": [
+                [
+                    {
+                        "node": "IF - Gravité élevée",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "AI Agent": {
+            "main": [
+                [
+                    {
+                        "node": "PostgreSQL - Sauvegarder report",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Gemini Chat Model": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "AI Agent",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    },
+                    {
+                        "node": "Structured Output Parser",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "OpenWeatherMap": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "AI Agent",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Simple Memory": {
+            "ai_memory": [
+                [
+                    {
+                        "node": "AI Agent",
+                        "type": "ai_memory",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Structured Output Parser": {
+            "ai_outputParser": [
+                [
+                    {
+                        "node": "AI Agent",
+                        "type": "ai_outputParser",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Send email": {
+            "main": [
+                []
+            ]
+        },
+        "IF - Gravité élevée": {
+            "main": [
+                [
+                    {
+                        "node": "Send email",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                []
+            ]
+        },
+        "History tool": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "AI Agent",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "meta": {
+        "templateCredsSetupCompleted": true,
+        "instanceId": "3e99244142e7c6cdf76b8241779b2c29d0a26b40a39b24599e30d230065347de"
+    }
+}

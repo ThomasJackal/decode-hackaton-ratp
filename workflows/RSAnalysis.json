@@ -1,0 +1,260 @@
+﻿{
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "social-media",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "40be275f-af03-43d9-b3df-3ae2c3e98d6c",
+            "name": "Webhook - Post Réseau Social",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2,
+            "position": [
+                -960,
+                144
+            ],
+            "webhookId": "ratp-social-media"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "=Tu es un modérateur expert de la RATP. Analyse ce post de réseau social et retourne UNIQUEMENT un JSON valide sans markdown.\n\nPOST REÇU:\n- Réseau: {{ $json.body.network }}\n- Auteur: {{ $json.body.author }}\n- Message: {{ $json.body.message }}\n- Hashtags: {{ $json.body.hashtags }}\n- Date: {{ $json.body.date }}\n\nANALYSE REQUISE:\n1. Est-ce un signalement/plainte concernant la RATP ? (oui/non)\n2. Quel est le sentiment ? (positif/neutre/negatif)\n3. Y a-t-il une ligne de bus mentionnée ?\n4. Y a-t-il un arrêt mentionné ?\n5. Quel type d'incident ?\n6. Quelle est la gravité ?\n\nRetourne EXACTEMENT ce JSON:\n{\n  \"est_signalement\": true,\n  \"sentiment\": \"negatif\",\n  \"score_sentiment\": 8,\n  \"ligne_detectee\": \"91\",\n  \"arret_detecte\": \"Odéon\",\n  \"type_incident\": \"comportement irrespectueux\",\n  \"gravite\": \"eleve\",\n  \"resume\": \"résumé court du problème\",\n  \"reponse_privee\": \"message de réponse personnalisé et empathique à envoyer en privé à l'auteur, en mentionnant le lien formulaire https://ratp.fr/signalement et le numéro 3424\",\n  \"should_create_report\": true\n}",
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 3,
+            "position": [
+                -720,
+                144
+            ],
+            "id": "a5a56100-2393-436b-b4c0-9d7aa7fa0d6e",
+            "name": "AI Agent - Analyse Post RS"
+        },
+        {
+            "parameters": {
+                "options": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+            "typeVersion": 1,
+            "position": [
+                -720,
+                352
+            ],
+            "id": "b6dd9b5c-558a-4e93-83df-25fa54d72506",
+            "name": "Google Gemini Chat Model",
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "LMACqGR3tt5C2QQG",
+                    "name": "Google Gemini(PaLM) Api account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "// Parser la réponse de l'AI Agent\nconst raw = $input.item.json.output;\nlet analyse;\n\ntry {\n  const cleaned = raw.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  analyse = JSON.parse(cleaned);\n} catch(e) {\n  analyse = {\n    est_signalement: true,\n    sentiment: 'negatif',\n    score_sentiment: 5,\n    ligne_detectee: '',\n    arret_detecte: '',\n    type_incident: 'Non déterminé',\n    gravite: 'moyen',\n    resume: raw.substring(0, 200),\n    reponse_privee: 'Bonjour, nous avons bien reçu votre message. Pouvez-vous nous contacter via notre formulaire officiel sur ratp.fr/signalement ou appeler le 3424 ?',\n    should_create_report: true\n  };\n}\n\nconst body = $('Webhook - Post Réseau Social').item.json.body;\n\nreturn [{\n  json: {\n    // Données du post original\n    network: body.network || 'Twitter/X',\n    author: body.author || '@anonyme',\n    message: body.message || '',\n    hashtags: body.hashtags || [],\n    post_date: body.date || new Date().toISOString(),\n    // Analyse IA\n    est_signalement: analyse.est_signalement || false,\n    sentiment: analyse.sentiment || 'neutre',\n    score_sentiment: analyse.score_sentiment || 0,\n    ligne_detectee: analyse.ligne_detectee || '',\n    arret_detecte: analyse.arret_detecte || '',\n    type_incident: analyse.type_incident || '',\n    gravite: analyse.gravite || 'faible',\n    resume: analyse.resume || '',\n    reponse_privee: analyse.reponse_privee || '',\n    should_create_report: analyse.should_create_report || false\n  }\n}];"
+            },
+            "id": "a9525933-c7ef-4064-a95d-c49c73d85fec",
+            "name": "Code - Parse Analyse RS",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -432,
+                144
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict"
+                    },
+                    "conditions": [
+                        {
+                            "id": "cond-signalement",
+                            "leftValue": "={{ $json.est_signalement }}",
+                            "rightValue": true,
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "equals"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "id": "78e84a29-21ca-4861-a6e7-b4c224ce34ec",
+            "name": "IF - C'est un signalement ?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                -240,
+                144
+            ]
+        },
+        {
+            "parameters": {
+                "fromEmail": "social@ratp-signalement.fr",
+                "toEmail": "moderation@ratp.fr",
+                "subject": "={{ '🔔 Nouveau signalement ' + $json.network + ' — ' + $json.author + ' — Gravité: ' + $json.gravite.toUpperCase() }}",
+                "emailFormat": "html",
+                "options": {}
+            },
+            "id": "722ef735-05a5-46ad-aeb8-187b23dbf94e",
+            "name": "Email Modération - Alerte RS",
+            "type": "n8n-nodes-base.emailSend",
+            "typeVersion": 2,
+            "position": [
+                0,
+                0
+            ],
+            "webhookId": "d374da53-0c26-4cbb-9910-117c5213102a",
+            "credentials": {
+                "smtp": {
+                    "id": "tfSBTB7mZx3EIrFJ",
+                    "name": "SMTP account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "INSERT INTO report (\n  driver_id, bus_id, description, severity, category,\n  report_date, reporter_contact, created_at,\n  matricule, gravite, score_ia, type_fait,\n  contexte_attenuant, raison_contexte, recommandation_ia,\n  summary, context, metadata,\n  meteo_contexte, heure_pointe, statut_traitement,\n  nb_signalements_historique, courrier_genere\n) VALUES (\n  1, 1,\n  '{{ $json.message.replace(/'/g, \"''\") }}',\n  '{{ $json.gravite }}',\n  '{{ $json.type_incident.replace(/'/g, \"''\") }}',\n  NOW(), '{\"source\": \"{{ $json.network }}\", \"author\": \"{{ $json.author }}\"}'::jsonb,\n  NOW(), 'RS-AUTO',\n  '{{ $json.gravite }}',\n  {{ $json.score_sentiment }},\n  '{{ $json.type_incident.replace(/'/g, \"''\") }}',\n  false, '',\n  'Répondre au post et inviter à faire un signalement officiel',\n  '{{ $json.resume.replace(/'/g, \"''\") }}',\n  'Source: {{ $json.network }} | Auteur: {{ $json.author }}',\n  '{\"source\": \"social_media\", \"network\": \"{{ $json.network }}\", \"author\": \"{{ $json.author }}\", \"score_sentiment\": {{ $json.score_sentiment }}}'::jsonb,\n  '', false, 'en_attente', 0, ''\n) RETURNING id",
+                "options": {}
+            },
+            "id": "eca30286-85c5-4c94-b01f-ead76ef8bee7",
+            "name": "PostgreSQL - Créer Signalement RS",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 2,
+            "position": [
+                0,
+                192
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "RBCoYDzS6wEsCYZG",
+                    "name": "Postgres account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={\n  \"success\": true,\n  \"est_signalement\": {{ $('Code - Parse Analyse RS').item.json.est_signalement }},\n  \"sentiment\": \"{{ $('Code - Parse Analyse RS').item.json.sentiment }}\",\n  \"gravite\": \"{{ $('Code - Parse Analyse RS').item.json.gravite }}\",\n  \"score_sentiment\": {{ $('Code - Parse Analyse RS').item.json.score_sentiment }},\n  \"ligne_detectee\": \"{{ $('Code - Parse Analyse RS').item.json.ligne_detectee }}\",\n  \"arret_detecte\": \"{{ $('Code - Parse Analyse RS').item.json.arret_detecte }}\",\n  \"resume\": \"{{ $('Code - Parse Analyse RS').item.json.resume }}\",\n  \"reponse_envoyee\": \"{{ $('Code - Parse Analyse RS').item.json.reponse_privee }}\",\n  \"report_id\": {{ $('PostgreSQL - Créer Signalement RS').item.json.id }},\n  \"action\": \"signalement_cree_reponse_envoyee\"\n}",
+                "options": {}
+            },
+            "id": "8dfc50fd-abd0-4dde-9ec4-3914e2c68b2d",
+            "name": "Réponse - Signalement créé",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                240,
+                144
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={\n  \"success\": true,\n  \"est_signalement\": false,\n  \"sentiment\": \"{{ $json.sentiment }}\",\n  \"message\": \"Post analysé — pas un signalement, aucune action requise\",\n  \"action\": \"aucune\"\n}",
+                "options": {}
+            },
+            "id": "44459644-b488-4b60-91a0-06a1184bd244",
+            "name": "Réponse - Pas un signalement",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                0,
+                352
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook - Post Réseau Social": {
+            "main": [
+                [
+                    {
+                        "node": "AI Agent - Analyse Post RS",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "AI Agent - Analyse Post RS": {
+            "main": [
+                [
+                    {
+                        "node": "Code - Parse Analyse RS",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Gemini Chat Model": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "AI Agent - Analyse Post RS",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Code - Parse Analyse RS": {
+            "main": [
+                [
+                    {
+                        "node": "IF - C'est un signalement ?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "IF - C'est un signalement ?": {
+            "main": [
+                [
+                    {
+                        "node": "Email Modération - Alerte RS",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "PostgreSQL - Créer Signalement RS",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Réponse - Pas un signalement",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "PostgreSQL - Créer Signalement RS": {
+            "main": [
+                [
+                    {
+                        "node": "Réponse - Signalement créé",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "meta": {
+        "templateCredsSetupCompleted": true,
+        "instanceId": "3e99244142e7c6cdf76b8241779b2c29d0a26b40a39b24599e30d230065347de"
+    }
+}
