@@ -16,6 +16,11 @@ return [
         'path' => './assets/app.js',
         'entrypoint' => true,
     ],
+    /** Chargé en plus sur la page signalement (templates/report/new.html.twig) pour garantir la dictée même si le bundle app ignorait ce module. */
+    'report_speech' => [
+        'path' => './assets/report_speech.js',
+        'entrypoint' => true,
+    ],
     '@hotwired/stimulus' => [
         'version' => '3.2.2',
     ],

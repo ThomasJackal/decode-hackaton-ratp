@@ -1,0 +1,13 @@
+# Reverse proxy TLS (hébergement type decode.school) : le profiler charge sinon des URLs
+# en http:// depuis une page https:// → Mixed Content / requêtes bloquées.
+# PRIVATE_SUBNETS fait confiance aux en-têtes X-Forwarded-* lorsque la connexion
+# directe au PHP vient d’une IP de réseau privé (load balancer, ingress, etc.).
+when@dev:
+    framework:
+        trusted_proxies: 'PRIVATE_SUBNETS'
+        trusted_headers:
+            - x-forwarded-for
+            - x-forwarded-port
+            - x-forwarded-proto
+            - x-forwarded-host
+            - x-forwarded-prefix

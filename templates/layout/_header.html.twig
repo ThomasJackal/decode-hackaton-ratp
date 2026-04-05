@@ -1,36 +1,43 @@
 {% set current_route = app.request.attributes.get('_route') %}
-{# Anonymous visitors get a minimal header on the public submission flow only #}
-{% set is_public_report = current_route in ['app_report_new', 'app_report_thanks'] and not app.user %}
+{% set is_management_user = app.user and is_granted('ROLE_USER') %}
+{% set is_public_report = current_route in ['app_report_new', 'app_report_thanks'] and not is_management_user %}
 
-<header class="site-header">
-    <div class="site-header__inner">
-        <a href="{{ app.user ? path('app_home') : path('app_report_new') }}" class="site-brand">
-            <img src="{{ asset('images/logo-text-transparent.png') }}" alt="" class="site-brand__logo" width="120" height="40" loading="lazy">
-            <span class="site-brand__text">Bus · Espace gestion</span>
-        </a>
+<header class="site-header{{ is_inspector_user ? ' site-header--inspector' : '' }}" {% if is_inspector_user %} style="background: linear-gradient(135deg, #3a5a8f 0%, #2a4a7a 100%); box-shadow: 0 8px 24px rgba(42, 74, 122, 0.22);" {% endif %}>
+	<div class="site-header__inner">
+		<a href="{{ is_management_user ? path('app_home') : path('app_report_new') }}" class="site-brand">
+			<img src="{{ asset('images/logo-text-transparent.png') }}" alt="" class="site-brand__logo" width="120" height="40" loading="lazy">
+			<span class="site-brand__text">Bus · Espace gestion</span>
+		</a>
 
-        {% if app.user %}
-            <nav class="site-nav" aria-label="Navigation principale">
-                <a href="{{ path('app_home') }}" class="site-nav__link {{ current_route == 'app_home' ? 'is-active' : '' }}">Tableau de bord</a>
-                <a href="{{ path('app_report_index') }}" class="site-nav__link {{ current_route starts with 'app_report' and not is_public_report ? 'is-active' : '' }}">Signalements</a>
-                <a href="{{ path('app_driver_index') }}" class="site-nav__link {{ current_route starts with 'app_driver' ? 'is-active' : '' }}">Conducteurs</a>
-                <a href="{{ path('app_report_new') }}" class="site-nav__link site-nav__link--outline">Formulaire public</a>
-                <a href="{{ path('app_register') }}" class="site-nav__link site-nav__link--quiet">Nouveau compte</a>
-            </nav>
-            <div class="site-header__user">
-                <span class="site-header__username">{{ app.user.userIdentifier }}</span>
-                <a href="{{ path('app_logout') }}" class="site-nav__link site-nav__link--quiet">Déconnexion</a>
-            </div>
-        {% else %}
-            <nav class="site-nav site-nav--anon" aria-label="Navigation">
-                {% if is_public_report %}
-                    <a href="{{ path('app_login') }}" class="site-nav__link site-nav__link--outline">Connexion équipe</a>
-                {% elseif current_route == 'app_login' %}
-                    <a href="{{ path('app_report_new') }}" class="site-nav__link">Signalement voyageur</a>
-                {% else %}
-                    <a href="{{ path('app_login') }}" class="site-nav__link site-nav__link--outline">Connexion</a>
-                {% endif %}
-            </nav>
-        {% endif %}
-    </div>
+		{% if is_management_user %}
+			<nav class="site-nav" aria-label="Navigation principale">
+				<a href="{{ path('app_home') }}" class="site-nav__link {{ current_route == 'app_home' ? 'is-active' : '' }}">Tableau de bord</a>
+				<a href="{{ path('app_report_index') }}" class="site-nav__link {{ current_route starts with 'app_report' and not is_public_report ? 'is-active' : '' }}">Signalements</a>
+				<a href="{{ path('app_driver_index') }}" class="site-nav__link {{ current_route starts with 'app_driver' ? 'is-active' : '' }}">Conducteurs</a>
+				<a href="{{ path('app_report_new') }}" class="site-nav__link site-nav__link--outline">Formulaire public</a>
+			</nav>
+			<div class="site-header__user">
+				<span class="site-header__username">{{ app.user.userIdentifier }}</span>
+				<a href="{{ path('app_logout') }}" class="site-nav__link site-nav__link--quiet">Déconnexion</a>
+			</div>
+		{% elseif app.user %}
+			<nav class="site-nav site-nav--anon" aria-label="Navigation inspecteur">
+				<a href="{{ path('app_report_new') }}" class="site-nav__link {{ current_route == 'app_report_new' ? 'is-active' : '' }}">Signalement</a>
+			</nav>
+			<div class="site-header__user">
+				<span class="site-header__username">{{ app.user.userIdentifier }}</span>
+				<a href="{{ path('app_logout') }}" class="site-nav__link site-nav__link--quiet">Déconnexion</a>
+			</div>
+		{% else %}
+			<nav class="site-nav site-nav--anon" aria-label="Navigation">
+				{% if is_public_report %}
+					<a href="{{ path('app_login') }}" class="site-nav__link site-nav__link--outline">Connexion équipe</a>
+				{% elseif current_route == 'app_login' %}
+					<a href="{{ path('app_report_new') }}" class="site-nav__link">Signalement voyageur</a>
+				{% else %}
+					<a href="{{ path('app_login') }}" class="site-nav__link site-nav__link--outline">Connexion</a>
+				{% endif %}
+			</nav>
+		{% endif %}
+	</div>
 </header>

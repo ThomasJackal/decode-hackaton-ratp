@@ -123,19 +123,27 @@ export default class extends Controller {
             return;
         }
         this.identifyBlockTarget.classList.add("is-collapsed");
-        const finder = /** @type {Record<string, string>} */ (data.finder || {});
+        const finder = /** @type {Record<string, unknown>} */ (data.finder || {});
+        const transit = /** @type {Record<string, { code?: string; name?: string; label?: string }>|undefined} */ (finder.transit);
         const parts = [];
         if (data.busId != null) {
             parts.push(`Bus n°${data.busId}`);
         }
-        if (finder.lineId) {
-            parts.push(`Ligne ${finder.lineId}`);
+        const linePart = transit?.line?.code
+            ? `${transit.line.code}${transit.line.name ? ` — ${transit.line.name}` : ""}`
+            : finder.lineId;
+        if (linePart) {
+            parts.push(`Ligne ${linePart}`);
         }
-        if (finder.direction) {
-            parts.push(finder.direction);
+        const dirPart = transit?.direction?.label || transit?.direction?.code || finder.direction;
+        if (dirPart) {
+            parts.push(String(dirPart));
         }
-        if (finder.stopId) {
-            parts.push(`Arrêt ${finder.stopId}`);
+        const stopPart = transit?.stop?.code
+            ? `${transit.stop.code}${transit.stop.name ? ` — ${transit.stop.name}` : ""}`
+            : finder.stopId;
+        if (stopPart) {
+            parts.push(`Arrêt ${stopPart}`);
         }
         this.identifyDoneTextTarget.textContent = parts.join(" · ");
     }

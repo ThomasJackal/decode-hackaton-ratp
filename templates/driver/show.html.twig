@@ -1,30 +1,160 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Conducteur #{{ driver.id }}{% endblock %}
+{% block title %}
+	{% set dc = driver.contact is iterable ? driver.contact : {} %}
+	{% set driver_display_name = dc.name|default('')|trim %}
+	{{ driver_display_name ? driver_display_name ~ ' — Conducteur' : 'Conducteur #' ~ driver.id }}
+{% endblock %}
 
 {% block body %}
-    <div class="page-intro">
-        <h1 class="page-title">Conducteur #{{ driver.id }}</h1>
-    </div>
+	{% set dc = driver.contact is iterable ? driver.contact : {} %}
+	{% set driver_display_name = dc.name|default('')|trim %}
+	{% set driver_phone = (dc.telephone|default('')|trim) is not empty ? dc.telephone : (dc.phone|default('')|trim) %}
+	{% set driver_initial = driver_display_name ? driver_display_name|slice(0, 1)|upper : '#' ~ driver.id %}
+	{% set sev_labels = { 'high': 'Élevée', 'critical': 'Critique', 'medium': 'Moyenne', 'low': 'Faible', 'positive': 'Positive' } %}
+	{% set situation_labels = {
+        'safety': 'Sécurité',
+        'comfort': 'Confort à bord',
+        'positive': 'Retour positif',
+        'maintenance': 'Matériel / maintenance',
+        'punctuality': 'Ponctualité',
+    } %}
 
-    <div class="table-wrap">
-        <table class="table">
-            <tbody>
-                <tr>
-                    <th>Id</th>
-                    <td>{{ driver.id }}</td>
-                </tr>
-                <tr>
-                    <th>Contact</th>
-                    <td><pre class="mb-0" style="margin:0; white-space:pre-wrap; font:inherit;">{{ driver.contact|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+	<div class="report-dash">
+		<nav class="report-dash__nav" aria-label="Navigation">
+			<a href="{{ path('app_driver_index') }}" class="report-dash__back">← Conducteurs</a>
+		</nav>
 
-    <div class="stack-actions">
-        <a href="{{ path('app_driver_index') }}" class="btn btn--secondary">Liste</a>
-        <a href="{{ path('app_driver_edit', {'id': driver.id}) }}" class="btn">Modifier</a>
-        {{ include('driver/_delete_form.html.twig') }}
-    </div>
+		<header class="report-dash__page-head report-dash__page-head--compact">
+			<div class="report-dash__page-head-row">
+				<h1 class="page-title report-dash__title">
+					{% if driver_display_name %}
+						{{ driver_display_name }}
+					{% else %}
+						Conducteur n°{{ driver.id }}
+					{% endif %}
+				</h1>
+				<p class="panel__meta" role="status">{{ driver_report_count }} signalement{{ driver_report_count > 1 ? 's' : '' }}</p>
+			</div>
+		</header>
+
+		<div class="report-dash__layout">
+			<div class="report-dash__main">
+				<section class="panel report-dash__block" aria-labelledby="driver-reports-heading">
+					<div class="panel__header">
+						<h2 class="panel__title" id="driver-reports-heading">Historique des signalements</h2>
+						<a href="{{ path('app_report_index', { driver_id: driver.id }) }}" class="panel__meta">Liste filtrée →</a>
+					</div>
+
+					{% if driver_reports is empty %}
+						<div class="report-dash__panel-content">
+							<p class="report-dash__empty-hint">Aucun signalement associé à ce conducteur.</p>
+						</div>
+					{% else %}
+						<div class="table-wrap table-wrap--flush">
+							<table class="table report-dash__table">
+								<thead>
+									<tr>
+										<th scope="col">N°</th>
+										<th scope="col">Statut</th>
+										<th scope="col">Créé le</th>
+										<th scope="col">Gravité</th>
+										<th scope="col">Crédibilité</th>
+										<th scope="col">Type</th>
+										<th scope="col">Bus</th>
+										<th scope="col">
+											<span class="visually-hidden">Action</span>
+										</th>
+									</tr>
+								</thead>
+								<tbody>
+									{% for report in driver_reports %}
+										{% set row_sev = report.severity|default('')|lower %}
+										{% set sev_class = {
+                                            'high': 'report-shortlist__severity--high',
+                                            'critical': 'report-shortlist__severity--critical',
+                                            'medium': 'report-shortlist__severity--medium',
+                                            'low': 'report-shortlist__severity--low',
+                                            'positive': 'report-shortlist__severity--low',
+                                        }[row_sev]|default('') %}
+										{% set row_cred = report.reportCredibility|default('')|lower %}
+										{% set cred_fr = { 'low': 'Faible', 'medium': 'Moyenne', 'high': 'Élevée' } %}
+										{% set cred_cls = row_cred in ['low', 'medium', 'high'] ? 'report-cred--' ~ row_cred : 'report-cred--unknown' %}
+										{% set cred_txt = row_cred in ['low', 'medium', 'high'] ? cred_fr[row_cred] : (report.reportCredibility|default('')|trim ?: '—') %}
+										{% set st = report.situationType|default('')|lower %}
+										<tr>
+											<td>
+												<strong>#{{ report.id }}</strong>
+											</td>
+											<td>
+												{% if report.closedAt %}
+													<span class="report-list-status report-list-status--closed" title="Clos le {{ report.closedAt|date('d/m/Y H:i') }}">Clos</span>
+												{% else %}
+													<span class="report-list-status report-list-status--open">Ouvert</span>
+												{% endif %}
+											</td>
+											<td>{{ report.createdAt ? report.createdAt|date('d/m/Y H:i') : '—' }}</td>
+											<td>
+												<span class="report-shortlist__severity report-shortlist__severity--prominent {{ sev_class }}">{{ sev_labels[row_sev]|default(report.severity) }}</span>
+											</td>
+											<td>
+												<span class="report-cred {{ cred_cls }}">{{ cred_txt }}</span>
+											</td>
+											<td>{{ situation_labels[st]|default(report.situationType) }}</td>
+											<td>{{ report.bus ? '#' ~ report.bus.id : '—' }}</td>
+											<td>
+												<a href="{{ path('app_report_show', { id: report.id }) }}">Voir</a>
+											</td>
+										</tr>
+									{% endfor %}
+								</tbody>
+							</table>
+						</div>
+					{% endif %}
+				</section>
+			</div>
+
+			<aside class="report-dash__aside">
+				<section class="panel report-dash__block" aria-labelledby="driver-card-heading">
+					<div class="panel__header">
+						<h2 class="panel__title" id="driver-card-heading">Fiche</h2>
+					</div>
+					<div class="report-dash__panel-content report-dash__person">
+						<div class="report-dash__person-head">
+							<div class="report-dash__person-avatar" aria-hidden="true">{{ driver_initial }}</div>
+							<div class="report-dash__person-id">
+								<p class="report-dash__person-name">
+									{% if driver_display_name %}
+										{{ driver_display_name }}
+									{% else %}
+										#{{ driver.id }}
+									{% endif %}
+								</p>
+								{% if dc.employeeId|default('')|trim is not empty %}
+									<p class="report-dash__person-meta">{{ dc.employeeId }}</p>
+								{% endif %}
+							</div>
+						</div>
+						<p class="report-dash__person-meta">Identifiant interne : {{ driver.id }}</p>
+						{% if dc.email|default('')|trim is not empty or driver_phone is not empty %}
+							<div class="report-dash__person-contact">
+								{% if dc.email|default('')|trim is not empty %}
+									<a href="mailto:{{ dc.email|e('html_attr') }}" class="report-dash__contact-line">{{ dc.email }}</a>
+								{% endif %}
+								{% if driver_phone is not empty %}
+									<a href="tel:{{ driver_phone|replace({' ': '', '.': '', '-': ''}) }}" class="report-dash__contact-line">{{ driver_phone }}</a>
+								{% endif %}
+							</div>
+						{% endif %}
+					</div>
+				</section>
+			</aside>
+		</div>
+
+		<div class="stack-actions report-dash__footer-actions">
+			<a href="{{ path('app_driver_index') }}" class="btn btn--secondary">← Liste</a>
+			<a href="{{ path('app_driver_edit', { id: driver.id }) }}" class="btn">Modifier</a>
+			{{ include('driver/_delete_form.html.twig') }}
+		</div>
+	</div>
 {% endblock %}

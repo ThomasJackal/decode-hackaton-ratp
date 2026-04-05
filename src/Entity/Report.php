@@ -58,6 +58,16 @@ class Report
     #[ORM\Column(type: Types::JSONB)]
     private mixed $metadata = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $closedAt = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $closureReason = null;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?User $closedBy = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -229,5 +239,46 @@ class Report
         $this->metadata = $metadata;
 
         return $this;
+    }
+
+    public function getClosedAt(): ?\DateTimeImmutable
+    {
+        return $this->closedAt;
+    }
+
+    public function setClosedAt(?\DateTimeImmutable $closedAt): static
+    {
+        $this->closedAt = $closedAt;
+
+        return $this;
+    }
+
+    public function getClosureReason(): ?string
+    {
+        return $this->closureReason;
+    }
+
+    public function setClosureReason(?string $closureReason): static
+    {
+        $this->closureReason = $closureReason;
+
+        return $this;
+    }
+
+    public function getClosedBy(): ?User
+    {
+        return $this->closedBy;
+    }
+
+    public function setClosedBy(?User $closedBy): static
+    {
+        $this->closedBy = $closedBy;
+
+        return $this;
+    }
+
+    public function isClosed(): bool
+    {
+        return null !== $this->closedAt;
     }
 }

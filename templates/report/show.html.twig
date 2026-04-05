@@ -1,171 +1,295 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Signalement #{{ report.id }}{% endblock %}
+{% block title %}Signalement #{{ report.id }}
+{% endblock %}
 
 {% block body %}
-    {% set sev = report.severity|default('')|lower %}
-    {% set sev_class = {
+	{% set sev = report.severity|default('')|lower %}
+	{% set sev_class = {
         'high': 'report-shortlist__severity--high',
         'critical': 'report-shortlist__severity--critical',
         'medium': 'report-shortlist__severity--medium',
         'low': 'report-shortlist__severity--low',
         'positive': 'report-shortlist__severity--low',
     }[sev]|default('') %}
-    {% set rc = report.reporterContact is iterable ? report.reporterContact : {} %}
-    {% set driver_name = '' %}
-    {% if report.driver and report.driver.contact is iterable %}
-        {% set driver_name = report.driver.contact.name|default('') %}
-    {% endif %}
-    {% set meta = report.metadata is iterable ? report.metadata : {} %}
-    {% set finder = meta.finder is defined and meta.finder is iterable ? meta.finder : null %}
+	{% set sev_labels = { 'high': 'Élevée', 'critical': 'Critique', 'medium': 'Moyenne', 'low': 'Faible', 'positive': 'Positive' } %}
+	{% set sev_label = sev_labels[sev]|default(report.severity) %}
+	{% set situation_labels = {
+        'safety': 'Sécurité',
+        'comfort': 'Confort à bord',
+        'positive': 'Retour positif',
+        'maintenance': 'Matériel / maintenance',
+        'punctuality': 'Ponctualité',
+    } %}
+	{% set situation_label = situation_labels[report.situationType|default('')|lower]|default(report.situationType) %}
+	{% set cred = report.reportCredibility|default('')|lower %}
+	{% set cred_keys = ['low', 'medium', 'high'] %}
+	{% set cred_labels = { 'low': 'Faible', 'medium': 'Moyenne', 'high': 'Élevée' } %}
+	{% set cred_key = cred in cred_keys ? cred : (report.reportCredibility|default('')|trim ? 'custom' : 'unknown') %}
+	{% set cred_display = cred in cred_keys ? cred_labels[cred] : (report.reportCredibility|default('')|trim ?: 'Non évaluée') %}
+	{% set cred_hint = {
+        'low': 'Recouper les faits avant une décision forte.',
+        'medium': 'Corréler avec l’historique et le contexte.',
+        'high': 'Base exploitable pour prioriser l’action.',
+        'custom': 'Valeur saisie en base.',
+        'unknown': '—',
+    } %}
+	{% set rc = report.reporterContact is iterable ? report.reporterContact : {} %}
+	{% set dc = report.driver and report.driver.contact is iterable ? report.driver.contact : {} %}
+	{% set driver_display_name = dc.name|default('')|trim %}
+	{% set driver_phone = (dc.telephone|default('')|trim) is not empty ? dc.telephone : (dc.phone|default('')|trim) %}
+	{% set driver_initial = driver_display_name ? driver_display_name|slice(0, 1)|upper : (report.driver ? '#' ~ report.driver.id : '?') %}
+	{% set meta_raw = report.metadata %}
+	{% set meta = meta_raw is iterable ? meta_raw : {} %}
+	{% set finder = meta.finder is defined and meta.finder is iterable ? meta.finder : null %}
 
-    <article class="report-detail" aria-labelledby="report-detail-title">
-        <header class="report-detail__header">
-            <div class="report-detail__heading">
-                <p class="report-detail__eyebrow">Fiche signalement · lecture seule</p>
-                <h1 class="page-title report-detail__title" id="report-detail-title">Signalement n°{{ report.id }}</h1>
-                <p class="report-detail__subtitle">
-                    <span class="report-detail__chip">{{ report.situationType }}</span>
-                    {% if report.incidentDate ?? report.reportDate %}
-                        {% set idate = report.incidentDate ?? report.reportDate %}
-                        <span class="report-detail__when">Incident le {{ idate|date('d/m/Y') }}, {{ idate|date('H:i') }}</span>
-                    {% endif %}
-                </p>
-            </div>
-            <div class="report-detail__badges">
-                <span class="report-shortlist__severity {{ sev_class }}" title="Gravité">{{ report.severity }}</span>
-                {% if report.reportCredibility|default('')|trim is not empty %}
-                    <span class="report-detail__chip report-detail__chip--meta" title="Crédibilité du signalement">{{ report.reportCredibility }}</span>
-                {% endif %}
-            </div>
-        </header>
+	<div class="report-dash">
+		<nav class="report-dash__nav" aria-label="Navigation">
+			<a href="{{ path('app_report_index') }}" class="report-dash__back">← Liste des signalements</a>
+		</nav>
 
-        {% if report.situationSummary|default('')|trim is not empty %}
-            <p class="report-detail__summary" role="doc-subtitle">{{ report.situationSummary }}</p>
-        {% endif %}
+		<header class="report-dash__page-head report-dash__page-head--compact">
+			<div class="report-dash__page-head-row">
+				<h1 class="page-title report-dash__title">Signalement n°{{ report.id }}</h1>
+				{% if report.closedAt %}
+					<p class="report-dash__status-badge report-dash__status-badge--closed" role="status">Clos</p>
+				{% endif %}
+			</div>
+		</header>
 
-        <section class="report-detail__panel report-detail__panel--primary" aria-labelledby="report-desc-heading">
-            <h2 class="report-detail__panel-title" id="report-desc-heading">Compte rendu voyageur</h2>
-            <p class="report-detail__description">{{ report.description|nl2br }}</p>
-        </section>
+		<section class="panel report-dash__block report-dash__hero" aria-labelledby="report-dash-hero-heading">
+			<div class="panel__header">
+				<h2 class="panel__title" id="report-dash-hero-heading">Priorisation</h2>
+			</div>
+			<div class="report-dash__hero-body">
+				<div class="report-dash__signals" aria-label="Gravité et crédibilité">
+					<div class="report-dash__signal report-dash__signal--severity report-dash__signal--sev-{{ sev in ['high','critical','medium','low','positive'] ? sev : 'unknown' }}">
+						<span class="report-dash__signal-eyebrow">Gravité</span>
+						<strong class="report-dash__signal-value">{{ sev_label }}</strong>
+					</div>
+					<div class="report-dash__signal report-dash__signal--credibility report-dash__signal--cred-{{ cred_key }}">
+						<span class="report-dash__signal-eyebrow">Crédibilité</span>
+						<strong class="report-dash__signal-value">{{ cred_display }}</strong>
+						{% if cred_hint[cred_key]|trim is not empty and cred_hint[cred_key] != '—' %}
+							<p class="report-dash__signal-hint">{{ cred_hint[cred_key] }}</p>
+						{% endif %}
+					</div>
+				</div>
+				<p class="report-dash__type-line">
+					<span class="report-dash__type-label">Type</span>
+					{{ situation_label }}</p>
+				{% if report.situationSummary|default('')|trim is not empty %}
+					<p class="report-dash__lede report-dash__lede--tight">{{ report.situationSummary }}</p>
+				{% endif %}
+			</div>
+		</section>
 
-        {% if report.aggravatingContext|default('')|trim is not empty %}
-            <section class="report-detail__panel" aria-labelledby="report-ctx-aggravating-heading">
-                <h2 class="report-detail__panel-title" id="report-ctx-aggravating-heading">Contexte aggravant</h2>
-                <p class="report-detail__context">{{ report.aggravatingContext|nl2br }}</p>
-            </section>
-        {% endif %}
-        {% if report.mitigatingContext|default('')|trim is not empty %}
-            <section class="report-detail__panel" aria-labelledby="report-ctx-mitigating-heading">
-                <h2 class="report-detail__panel-title" id="report-ctx-mitigating-heading">Contexte atténuant</h2>
-                <p class="report-detail__context">{{ report.mitigatingContext|nl2br }}</p>
-            </section>
-        {% endif %}
+		<div class="report-dash__layout">
+			<div class="report-dash__main">
+				<section class="panel report-dash__block" aria-labelledby="report-account-heading">
+					<div class="panel__header">
+						<h2 class="panel__title" id="report-account-heading">Témoignage</h2>
+					</div>
+					<div class="report-dash__panel-content">
+						{% if report.description|default('')|trim is not empty %}
+							<div class="report-dash__prose">{{ report.description|nl2br }}</div>
+						{% else %}
+							<p class="report-dash__empty-hint">Aucune description.</p>
+						{% endif %}
+					</div>
+				</section>
 
-        <div class="report-detail__grid">
-            <section class="report-detail__panel" aria-labelledby="report-trip-heading">
-                <h2 class="report-detail__panel-title" id="report-trip-heading">Circuit &amp; calendrier</h2>
-                <dl class="report-detail-kv">
-                    <div class="report-detail-kv__row">
-                        <dt>Date / heure du signalement</dt>
-                        <dd>{{ report.reportDate ? report.reportDate|date('d/m/Y H:i') : '—' }}</dd>
-                    </div>
-                    <div class="report-detail-kv__row">
-                        <dt>Date / heure de l’incident</dt>
-                        <dd>{{ report.incidentDate ? report.incidentDate|date('d/m/Y H:i') : '—' }}</dd>
-                    </div>
-                    <div class="report-detail-kv__row">
-                        <dt>Enregistré le</dt>
-                        <dd>{{ report.createdAt ? report.createdAt|date('d/m/Y H:i') : '—' }}</dd>
-                    </div>
-                    <div class="report-detail-kv__row">
-                        <dt>Bus concerné</dt>
-                        <dd>
-                            {% if report.bus %}
-                                Véhicule n°{{ report.bus.id }}
-                            {% else %}
-                                —
-                            {% endif %}
-                        </dd>
-                    </div>
-                    <div class="report-detail-kv__row">
-                        <dt>Conducteur affecté</dt>
-                        <dd>
-                            {% if report.driver %}
-                                {% if driver_name %}
-                                    {{ driver_name }}
-                                    <span class="report-detail-kv__meta">(#{{ report.driver.id }})</span>
-                                {% else %}
-                                    Conducteur n°{{ report.driver.id }}
-                                {% endif %}
-                                <div class="report-detail-kv__action">
-                                    <a href="{{ path('app_driver_show', { id: report.driver.id }) }}">Voir la fiche conducteur</a>
-                                </div>
-                            {% else %}
-                                —
-                            {% endif %}
-                        </dd>
-                    </div>
-                </dl>
-            </section>
+				<section class="report-dash__context-grid" aria-labelledby="report-context-heading">
+					<h2 id="report-context-heading" class="visually-hidden">Contexte décisionnel</h2>
+					<div class="panel report-dash__block report-dash__context report-dash__context--aggravating">
+						<div class="panel__header">
+							<h3 class="panel__title report-dash__context-title">Aggravants</h3>
+						</div>
+						<div class="report-dash__panel-content">
+							{% if report.aggravatingContext|default('')|trim is not empty %}
+								<div class="report-dash__prose report-dash__prose--compact">{{ report.aggravatingContext|nl2br }}</div>
+							{% else %}
+								<p class="report-dash__empty-hint">—</p>
+							{% endif %}
+						</div>
+					</div>
+					<div class="panel report-dash__block report-dash__context report-dash__context--mitigating">
+						<div class="panel__header">
+							<h3 class="panel__title report-dash__context-title">Atténuants</h3>
+						</div>
+						<div class="report-dash__panel-content">
+							{% if report.mitigatingContext|default('')|trim is not empty %}
+								<div class="report-dash__prose report-dash__prose--compact">{{ report.mitigatingContext|nl2br }}</div>
+							{% else %}
+								<p class="report-dash__empty-hint">—</p>
+							{% endif %}
+						</div>
+					</div>
+				</section>
 
-            <section class="report-detail__panel" aria-labelledby="report-contact-heading">
-                <h2 class="report-detail__panel-title" id="report-contact-heading">Contact du déclarant</h2>
-                {% if rc is iterable and (rc.email|default('')|trim or rc.telephone|default('')|trim or rc.name|default('')|trim) %}
-                    <dl class="report-detail-kv">
-                        {% if rc.name|default('')|trim is not empty %}
-                            <div class="report-detail-kv__row">
-                                <dt>Nom ou pseudo</dt>
-                                <dd>{{ rc.name }}</dd>
-                            </div>
-                        {% endif %}
-                        {% if rc.email|default('')|trim is not empty %}
-                            <div class="report-detail-kv__row">
-                                <dt>E-mail</dt>
-                                <dd><a href="mailto:{{ rc.email|e('html_attr') }}">{{ rc.email }}</a></dd>
-                            </div>
-                        {% endif %}
-                        {% if rc.telephone|default('')|trim is not empty %}
-                            <div class="report-detail-kv__row">
-                                <dt>Téléphone</dt>
-                                <dd><a href="tel:{{ rc.telephone|replace({' ': '', '.': '', '-': ''}) }}">{{ rc.telephone }}</a></dd>
-                            </div>
-                        {% endif %}
-                    </dl>
-                {% else %}
-                    <p class="report-detail__empty">Aucun contact renseigné.</p>
-                {% endif %}
-            </section>
-        </div>
+				{% if report.closedAt %}
+					<section class="panel report-dash__block report-dash__closure" aria-labelledby="report-closure-heading">
+						<div class="panel__header">
+							<h2 class="panel__title" id="report-closure-heading">Clôture</h2>
+						</div>
+						<div class="report-dash__panel-content">
+							<p class="report-dash__closure-meta">
+								<time datetime="{{ report.closedAt|date('c') }}">{{ report.closedAt|date('d/m/Y H:i') }}</time>
+								{% if report.closedBy %}
+									· par
+									<strong>{{ report.closedBy.userIdentifier }}</strong>
+								{% endif %}
+							</p>
+							{% if report.closureReason|default('')|trim is not empty %}
+								<div class="report-dash__prose report-dash__prose--compact">{{ report.closureReason|nl2br }}</div>
+							{% endif %}
+						</div>
+					</section>
+				{% endif %}
 
-        {% if finder %}
-            <details class="report-detail__meta-details">
-                <summary>Détails techniques (corrélation bus / trajet)</summary>
-                <div class="report-detail__meta-body">
-                    {% if finder.lineId is defined %}
-                        <p><strong>Ligne</strong> {{ finder.lineId }}</p>
-                    {% endif %}
-                    {% if finder.stopId is defined %}
-                        <p><strong>Arrêt</strong> {{ finder.stopId }}</p>
-                    {% endif %}
-                    {% if finder.direction is defined %}
-                        <p><strong>Direction</strong> {{ finder.direction }}</p>
-                    {% endif %}
-                    {% if finder.source is defined %}
-                        <p><strong>Source résolution</strong> {{ finder.source }}</p>
-                    {% endif %}
-                    <p class="report-detail__meta-hint">Données issues du résolveur au moment du signalement ; la fiche elle-même n’est pas modifiable.</p>
-                </div>
-            </details>
-        {% elseif meta is not empty %}
-            <details class="report-detail__meta-details">
-                <summary>Métadonnées</summary>
-                <pre class="report-detail__pre">{{ meta|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
-            </details>
-        {% endif %}
+				{% if close_form %}
+					<section class="panel report-dash__block report-dash__close-action" aria-labelledby="report-close-form-heading">
+						<div class="panel__header">
+							<h2 class="panel__title" id="report-close-form-heading">Clôturer ce signalement</h2>
+						</div>
+						<div class="report-dash__panel-content">
+							<p class="report-dash__close-lead">Enregistrez la raison à tout moment avec « Sauvegarder », ou clôturez le signalement (5 caractères minimum pour la clôture). Une fois clos, le signalement n’est plus modifiable.</p>
+							{{ form_start(close_form, { attr: { class: 'report-close-form' } }) }}
+							<div class="form-field-spaced">
+								{{ form_label(close_form.closureReason) }}
+								{{ form_widget(close_form.closureReason) }}
+								{{ form_errors(close_form.closureReason) }}
+							</div>
+							{{ form_rest(close_form) }}
+							<div class="stack-actions report-close-form__actions report-close-form__actions--split">
+								<button type="submit" class="btn btn--secondary" formaction="{{ path('app_report_save_closure_reason', { id: report.id }) }}">Sauvegarder</button>
+								<button type="submit" class="btn btn--danger" formaction="{{ path('app_report_close', { id: report.id }) }}">Clôturer</button>
+							</div>
+							{{ form_end(close_form) }}
+						</div>
+					</section>
+				{% endif %}
 
-        <div class="stack-actions report-detail__actions">
-            <a href="{{ path('app_report_index') }}" class="btn btn--secondary">← Liste des signalements</a>
-        </div>
-    </article>
+				{% if finder and (finder.lineId is defined or finder.stopId is defined) %}
+					<p class="report-dash__finder-inline">
+						{% if finder.lineId is defined %}Ligne
+							{{ finder.lineId }}
+						{% endif %}
+						{% if finder.stopId is defined %}
+							{% if finder.lineId is defined %}
+								·
+							{% endif %}Arrêt
+							{{ finder.stopId }}
+						{% endif %}
+						{% if finder.direction is defined %}
+							·
+							{{ finder.direction }}
+						{% endif %}
+					</p>
+				{% endif %}
+			</div>
+
+			<aside class="report-dash__aside">
+				{% if report.driver %}
+					<section class="panel report-dash__block" aria-labelledby="report-driver-card-heading">
+						<div class="panel__header">
+							<h2 class="panel__title" id="report-driver-card-heading">Conducteur</h2>
+						</div>
+						<div class="report-dash__panel-content report-dash__person">
+							<div class="report-dash__person-head">
+								<div class="report-dash__person-avatar" aria-hidden="true">{{ driver_initial }}</div>
+								<div class="report-dash__person-id">
+									<p class="report-dash__person-name">
+										{% if driver_display_name %}
+											{{ driver_display_name }}{% else %}#{{ report.driver.id }}
+										{% endif %}
+									</p>
+									{% if dc.employeeId|default('')|trim is not empty %}
+										<p class="report-dash__person-meta">{{ dc.employeeId }}</p>
+									{% endif %}
+								</div>
+							</div>
+							{% if report.bus %}
+								<p class="report-dash__bus-inline">Bus n°{{ report.bus.id }}
+									—
+									<a href="{{ path('app_report_index', { bus_id: report.bus.id }) }}">signalements</a>
+								</p>
+							{% endif %}
+							<div class="report-dash__person-actions">
+								<a href="{{ path('app_driver_show', { id: report.driver.id }) }}" class="btn">Ouvrir la fiche</a>
+								<a href="{{ path('app_report_index', { driver_id: report.driver.id }) }}" class="btn btn--secondary">Ses signalements</a>
+							</div>
+							{% if dc.email|default('')|trim is not empty or driver_phone is not empty %}
+								<div class="report-dash__person-contact">
+									{% if dc.email|default('')|trim is not empty %}
+										<a href="mailto:{{ dc.email|e('html_attr') }}" class="report-dash__contact-line">{{ dc.email }}</a>
+									{% endif %}
+									{% if driver_phone is not empty %}
+										<a href="tel:{{ driver_phone|replace({' ': '', '.': '', '-': ''}) }}" class="report-dash__contact-line">{{ driver_phone }}</a>
+									{% endif %}
+								</div>
+							{% endif %}
+						</div>
+					</section>
+				{% elseif report.bus %}
+					<section class="panel report-dash__block" aria-labelledby="report-bus-only-heading">
+						<div class="panel__header">
+							<h2 class="panel__title" id="report-bus-only-heading">Bus</h2>
+						</div>
+						<div class="report-dash__panel-content">
+							<p class="report-dash__bus-inline">n°{{ report.bus.id }}
+								—
+								<a href="{{ path('app_report_index', { bus_id: report.bus.id }) }}">signalements</a>
+							</p>
+						</div>
+					</section>
+				{% endif %}
+
+				<section class="panel report-dash__block" aria-labelledby="report-timeline-heading">
+					<div class="panel__header">
+						<h2 class="panel__title" id="report-timeline-heading">Dates</h2>
+					</div>
+					<div class="report-dash__panel-content report-dash__panel-content--tight">
+						<ul class="report-dash__timeline">
+							<li class="report-dash__timeline-item">
+								<span class="report-dash__timeline-label">Fait</span>
+								<time class="report-dash__timeline-value" datetime="{{ report.incidentDate ? report.incidentDate|date('c') : '' }}">{{ report.incidentDate ? report.incidentDate|date('d/m/Y H:i') : '—' }}</time>
+							</li>
+							<li class="report-dash__timeline-item">
+								<span class="report-dash__timeline-label">Déclaration</span>
+								<time class="report-dash__timeline-value" datetime="{{ report.reportDate ? report.reportDate|date('c') : '' }}">{{ report.reportDate ? report.reportDate|date('d/m/Y H:i') : '—' }}</time>
+							</li>
+							<li class="report-dash__timeline-item report-dash__timeline-item--emphasis">
+								<span class="report-dash__timeline-label">En base</span>
+								<time class="report-dash__timeline-value" datetime="{{ report.createdAt ? report.createdAt|date('c') : '' }}">{{ report.createdAt ? report.createdAt|date('d/m/Y H:i') : '—' }}</time>
+							</li>
+						</ul>
+					</div>
+				</section>
+
+				{% if rc.name|default('')|trim or rc.email|default('')|trim or rc.telephone|default('')|trim %}
+					<section class="panel report-dash__block" aria-labelledby="report-reporter-heading">
+						<div class="panel__header">
+							<h2 class="panel__title" id="report-reporter-heading">Déclarant</h2>
+						</div>
+						<div class="report-dash__panel-content">
+							{% if rc.name|default('')|trim is not empty %}
+								<p class="report-dash__reporter-name">{{ rc.name }}</p>
+							{% endif %}
+							{% if rc.email|default('')|trim is not empty %}
+								<a href="mailto:{{ rc.email|e('html_attr') }}" class="report-dash__contact-line">{{ rc.email }}</a>
+							{% endif %}
+							{% if rc.telephone|default('')|trim is not empty %}
+								<a href="tel:{{ rc.telephone|replace({' ': '', '.': '', '-': ''}) }}" class="report-dash__contact-line">{{ rc.telephone }}</a>
+							{% endif %}
+						</div>
+					</section>
+				{% endif %}
+			</aside>
+		</div>
+
+		<div class="stack-actions report-dash__footer-actions">
+			<a href="{{ path('app_report_index') }}" class="btn btn--secondary">← Liste</a>
+		</div>
+	</div>
 {% endblock %}

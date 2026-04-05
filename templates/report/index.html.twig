@@ -69,8 +69,10 @@
             <thead>
                 <tr>
                     <th scope="col">Id</th>
+                    <th scope="col">Statut</th>
                     <th scope="col">Description</th>
                     <th scope="col">Gravité</th>
+                    <th scope="col">Crédibilité</th>
                     <th scope="col">Type de situation</th>
                     <th scope="col">Conducteur</th>
                     <th scope="col">Bus</th>
@@ -81,6 +83,19 @@
             <tbody>
             {% for report in reports %}
                 {% set show_url = path('app_report_show', { id: report.id }) %}
+                {% set row_sev = report.severity|default('')|lower %}
+                {% set sev_class = {
+                    'high': 'report-shortlist__severity--high',
+                    'critical': 'report-shortlist__severity--critical',
+                    'medium': 'report-shortlist__severity--medium',
+                    'low': 'report-shortlist__severity--low',
+                    'positive': 'report-shortlist__severity--low',
+                }[row_sev]|default('') %}
+                {% set sev_fr = { 'high': 'Élevée', 'critical': 'Critique', 'medium': 'Moyenne', 'low': 'Faible', 'positive': 'Positive' }[row_sev]|default(report.severity) %}
+                {% set row_cred = report.reportCredibility|default('')|lower %}
+                {% set cred_fr = { 'low': 'Faible', 'medium': 'Moyenne', 'high': 'Élevée' } %}
+                {% set cred_cls = row_cred in ['low', 'medium', 'high'] ? 'report-cred--' ~ row_cred : 'report-cred--unknown' %}
+                {% set cred_txt = row_cred in ['low', 'medium', 'high'] ? cred_fr[row_cred] : (report.reportCredibility|default('')|trim ?: '—') %}
                 <tr
                     class="report-list-row"
                     data-report-href="{{ show_url }}"
@@ -88,15 +103,19 @@
                     aria-label="Ouvrir le signalement n°{{ report.id }}"
                 >
                     <td><span class="report-list-row__id">{{ report.id }}</span></td>
+                    <td>
+                        {% if report.closedAt %}
+                            <span class="report-list-status report-list-status--closed" title="Clos le {{ report.closedAt|date('d/m/Y H:i') }}">Clos</span>
+                        {% else %}
+                            <span class="report-list-status report-list-status--open">Ouvert</span>
+                        {% endif %}
+                    </td>
                     <td>{{ report.description|length > 120 ? report.description|slice(0, 120) ~ '…' : report.description }}</td>
                     <td>
-                        <span class="report-shortlist__severity {{ {
-                            'high': 'report-shortlist__severity--high',
-                            'critical': 'report-shortlist__severity--critical',
-                            'medium': 'report-shortlist__severity--medium',
-                            'low': 'report-shortlist__severity--low',
-                            'positive': 'report-shortlist__severity--low',
-                        }[report.severity|default('')|lower]|default('') }}">{{ report.severity }}</span>
+                        <span class="report-shortlist__severity report-shortlist__severity--prominent {{ sev_class }}">{{ sev_fr }}</span>
+                    </td>
+                    <td>
+                        <span class="report-cred {{ cred_cls }}">{{ cred_txt }}</span>
                     </td>
                     <td>{{ report.situationType }}</td>
                     <td>{{ report.driver ? '#' ~ report.driver.id : '—' }}</td>
@@ -106,7 +125,7 @@
                 </tr>
             {% else %}
                 <tr>
-                    <td colspan="8">Aucun signalement à afficher.</td>
+                    <td colspan="10">Aucun signalement à afficher.</td>
                 </tr>
             {% endfor %}
             </tbody>

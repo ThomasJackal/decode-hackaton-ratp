@@ -2,165 +2,932 @@
 
 {% block title %}Tableau de bord{% endblock %}
 
+{% block stylesheets %}
+{{ parent() }}
+<style>
+.db-wrap {
+    --db-blue:   #003189;
+    --db-red:    #b42318;
+    --db-green:  #059669;
+    --db-amber:  #d97706;
+    --db-purple: #7c3aed;
+    --db-muted:  var(--color-text-muted);
+    --db-bg:     var(--color-bg);
+    --db-surf:   var(--color-surface);
+    --db-border: var(--color-border);
+    --db-text:   var(--color-text);
+    --db-radius: var(--radius);
+    --db-shadow: var(--shadow);
+}
+.db-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.db-live {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.db-live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--db-green);
+    animation: db-pulse 2s infinite;
+}
+@keyframes db-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+.db-live-label { font-size: 11px; color: var(--db-green); font-weight: 600; }
+.db-live-time  { font-size: 11px; color: var(--db-muted); }
+.db-seg {
+    display: flex;
+    background: var(--db-bg);
+    border-radius: 10px;
+    padding: 3px;
+    gap: 2px;
+    border: 1px solid var(--db-border);
+}
+.db-seg-btn {
+    padding: 5px 14px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--db-muted);
+    cursor: pointer;
+    transition: all .18s;
+    white-space: nowrap;
+}
+.db-seg-btn.is-on {
+    background: var(--db-surf);
+    color: var(--db-text);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+}
+.db-alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: #fff1f0;
+    border: 1px solid #ffc9c4;
+    border-radius: var(--db-radius);
+    font-size: 12px;
+    color: var(--db-red);
+    margin-bottom: 18px;
+}
+.db-alert svg { flex-shrink: 0; }
+.db-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+}
+@media (min-width: 640px) {
+    .db-kpi-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+.db-kpi {
+    background: var(--db-surf);
+    border-radius: var(--db-radius);
+    box-shadow: var(--db-shadow);
+    padding: 14px 16px;
+    border-left: 3px solid var(--kc, var(--color-primary));
+}
+.db-kpi__lbl { font-size: 11px; color: var(--db-muted); margin-bottom: 3px; }
+.db-kpi__val { font-size: 26px; font-weight: 700; color: var(--kc, var(--color-primary)); line-height: 1.1; }
+.db-kpi__sub { font-size: 11px; color: var(--db-muted); margin-top: 4px; }
+.db-kpi__sub.is-up   { color: var(--db-red); }
+.db-kpi__sub.is-down { color: var(--db-green); }
+.db-card {
+    background: var(--db-surf);
+    border-radius: var(--db-radius);
+    box-shadow: var(--db-shadow);
+    padding: 14px 16px;
+    margin-bottom: 14px;
+}
+.db-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.db-card__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--db-text);
+    padding-top: 2px;
+}
+.db-ch { position: relative; width: 100%; }
+.db-row2 {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: 14px;
+    margin-bottom: 14px;
+}
+@media (max-width: 640px) { .db-row2 { grid-template-columns: minmax(0, 1fr); } }
+.db-row3 {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 14px;
+}
+@media (max-width: 700px) { .db-row3 { grid-template-columns: minmax(0, 1fr); } }
+.db-pill {
+    display: flex;
+    background: var(--db-bg);
+    border-radius: 20px;
+    padding: 2px;
+    gap: 1px;
+    border: 1px solid var(--db-border);
+}
+.db-pill-btn {
+    padding: 4px 11px;
+    border-radius: 18px;
+    border: none;
+    background: transparent;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--db-muted);
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+}
+.db-pill-btn.is-on           { background: var(--db-surf); color: var(--db-text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.db-pill-btn.is-on.c-red     { background: #fff1f0; color: var(--db-red); }
+.db-pill-btn.is-on.c-blue    { background: #e8f0fe; color: var(--db-blue); }
+.db-pill-btn.is-on.c-green   { background: #ecfdf5; color: var(--db-green); }
+.db-tag-group { display: flex; gap: 5px; flex-wrap: wrap; }
+.db-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--db-border);
+    background: var(--db-surf);
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--db-muted);
+    cursor: pointer;
+    transition: all .15s;
+    user-select: none;
+}
+.db-tag:hover { border-color: var(--color-primary); color: var(--db-text); }
+.db-tag.is-on { color: var(--tc); border-color: var(--tc); background: var(--tb); }
+.db-chip-wrap { position: relative; display: inline-block; }
+.db-chip-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--db-border);
+    background: var(--db-surf);
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--db-muted);
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+}
+.db-chip-btn.has-val { border-color: var(--db-blue); background: #e8f0fe; color: var(--db-blue); }
+.db-chip-btn svg { width: 10px; height: 10px; transition: transform .15s; flex-shrink: 0; }
+.db-chip-btn.is-open svg { transform: rotate(180deg); }
+.db-chip-dd {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    background: var(--db-surf);
+    border: 1px solid var(--db-border);
+    border-radius: var(--db-radius);
+    padding: 5px;
+    min-width: 150px;
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    box-shadow: var(--db-shadow);
+}
+.db-chip-dd.is-open { display: flex; }
+.db-chip-opt {
+    padding: 7px 10px;
+    border-radius: 7px;
+    font-size: 12px;
+    color: var(--db-muted);
+    cursor: pointer;
+    transition: background .12s;
+    white-space: nowrap;
+}
+.db-chip-opt:hover  { background: var(--db-bg); color: var(--db-text); }
+.db-chip-opt.is-sel { background: #e8f0fe; color: var(--db-blue); font-weight: 500; }
+.db-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: 1px solid var(--db-border);
+    background: var(--db-surf);
+    cursor: pointer;
+    transition: all .15s;
+    color: var(--db-muted);
+    flex-shrink: 0;
+}
+.db-icon-btn:hover { border-color: var(--color-primary); color: var(--db-text); }
+.db-icon-btn.is-on { background: #e8f0fe; border-color: var(--db-blue); color: var(--db-blue); }
+.db-range-wrap { display: flex; align-items: center; gap: 7px; }
+.db-range-wrap input[type=range] { width: 80px; }
+.db-range-val { font-size: 11px; font-weight: 500; color: var(--db-text); min-width: 40px; }
+.db-fsep { width: 1px; height: 18px; background: var(--db-border); flex-shrink: 0; }
+.db-filter-bar { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.db-leg { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+.db-leg-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--db-muted); }
+.db-leg-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.db-driver-list { display: flex; flex-direction: column; gap: 6px; }
+.db-driver-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--db-bg);
+    border-radius: 8px;
+    transition: background .15s;
+}
+.db-driver-item:hover { background: var(--db-border); }
+.db-driver-rank {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600;
+    flex-shrink: 0;
+}
+.db-driver-info { flex: 1; min-width: 0; }
+.db-driver-name { font-size: 12px; font-weight: 600; color: var(--db-text); }
+.db-driver-meta { font-size: 11px; color: var(--db-muted); }
+.db-driver-bar-wrap { width: 70px; flex-shrink: 0; }
+.db-driver-bar {
+    height: 5px;
+    background: var(--db-border);
+    border-radius: 4px;
+overflow: hidden;
+    margin-bottom: 3px;
+}
+.db-driver-bar-fill { height: 100%; border-radius: 4px; transition: width .4s ease; }
+.db-driver-cnt { font-size: 10px; color: var(--db-muted); text-align: right; }
+.db-badge {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 20px;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+.db-goal-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--db-muted);
+    margin-bottom: 3px;
+    margin-top: 10px;
+}
+.db-goal-bg {
+    height: 7px;
+    background: var(--db-border);
+    border-radius: 20px;
+    overflow: hidden;
+}
+.db-goal-fill {
+    height: 100%;
+    border-radius: 20px;
+    transition: width .5s ease;
+}
+</style>
+{% endblock %}
+
 {% block body %}
-    <div class="page-intro">
-        <h1 class="page-title">Tableau de bord</h1>
-        <p class="page-subtitle">Vue d’ensemble des signalements : volumes récents, répartition par gravité et par type de situation, accès rapide au détail et aux filtres de la liste.</p>
+<div class="db-wrap">
+<div class="page-intro">
+    <h1 class="page-title">Tableau de bord</h1>
+    <p class="page-subtitle">Suivi en temps réel · Analyse IA · Conducteurs · Objectifs</p>
+</div>
+
+<div class="db-topbar">
+    <div class="db-live">
+        <div class="db-live-dot"></div>
+        <span class="db-live-label">En direct</span>
+        <span class="db-live-time">· {{ "now"|date("H:i") }}</span>
+    </div>
+    <div class="db-seg" id="db-global-seg">
+        <button type="button" class="db-seg-btn is-on" data-period="7d" onclick="dbSetGlobal('7d',this)">7 jours</button>
+        <button type="button" class="db-seg-btn" data-period="30d" onclick="dbSetGlobal('30d',this)">30 jours</button>
+        <button type="button" class="db-seg-btn" data-period="90d" onclick="dbSetGlobal('90d',this)">3 mois</button>
+        <button type="button" class="db-seg-btn" data-period="1an" onclick="dbSetGlobal('1an',this)">1 an</button>
+    </div>
+</div>
+
+{% if top_drivers_at_risk|length > 0 and top_drivers_at_risk[0].count >= 5 %}
+<div class="db-alert">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#b42318" stroke-width="1.5">
+        <path d="M8 2L14 13H2L8 2z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".5" fill="#b42318"/>
+    </svg>
+    <span><strong>Alerte :</strong> {{ top_drivers_at_risk[0].matricule }} — {{ top_drivers_at_risk[0].count }} signalements sur 12 mois. Convocation disciplinaire recommandée par l'IA.</span>
+</div>
+{% endif %}
+
+<div class="db-kpi-row">
+    <div class="db-kpi" style="--kc:#003189">
+        <div class="db-kpi__lbl">Signalements</div>
+        <div class="db-kpi__val" id="db-kv1">{{ kpi_by_period['7d'].reports }}</div>
+        <div class="db-kpi__sub is-up" id="db-ks1">{% if trend_7d != 0 %}&#9650; {{ trend_7d }}% vs période préc.{% else %}Période : 7 jours{% endif %}</div>
+    </div>
+    <div class="db-kpi" style="--kc:#b42318">
+        <div class="db-kpi__lbl">Gravité élevée</div>
+        <div class="db-kpi__val" id="db-kv2">{{ kpi_by_period['7d'].high }}</div>
+        <div class="db-kpi__sub">Sur la période sélectionnée</div>
+    </div>
+    <div class="db-kpi" style="--kc:#059669">
+        <div class="db-kpi__lbl">Taux traitement</div>
+        <div class="db-kpi__val" id="db-kv3">{{ kpi_by_period['7d'].treatment }}%</div>
+        <div class="db-kpi__sub is-down">Objectif 85%</div>
+    </div>
+    <div class="db-kpi" style="--kc:#d97706">
+        <div class="db-kpi__lbl">Conducteurs à risque</div>
+        <div class="db-kpi__val" id="db-kv4">{{ kpi_by_period['7d'].drivers_at_risk }}</div>
+        <div class="db-kpi__sub">Sur {{ driver_count }} conducteurs</div>
+    </div>
+</div>
+
+<div class="db-row2">
+    <div class="db-card">
+        <div class="db-card__head">
+            <span class="db-card__title">Évolution des signalements</span>
+            <div class="db-filter-bar">
+                <div class="db-seg" id="db-evol-gran" style="padding:2px;gap:1px">
+                    <button type="button" class="db-seg-btn is-on" style="padding:3px 10px;font-size:11px" data-gran="jour" onclick="dbSetEvol('jour',this)">Jour</button>
+                    <button type="button" class="db-seg-btn" style="padding:3px 10px;font-size:11px" data-gran="semaine" onclick="dbSetEvol('semaine',this)">Semaine</button>
+                    <button type="button" class="db-seg-btn" style="padding:3px 10px;font-size:11px" data-gran="mois" onclick="dbSetEvol('mois',this)">Mois</button>
+                </div>
+                <div class="db-fsep"></div>
+                <div class="db-tag-group">
+                    <div class="db-tag is-on" style="--tc:#003189;--tb:#e8f0fe" id="db-ev-total" onclick="dbToggleEvSerie('total',this)">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 9 Q4 3 7 6 Q10 9 11 3"/></svg>
+                        Total
+                    </div>
+                    <div class="db-tag is-on" style="--tc:#b42318;--tb:#fff1f0" id="db-ev-eleve" onclick="dbToggleEvSerie('eleve',this)">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 9 Q4 3 7 6 Q10 9 11 3" stroke-dasharray="3 2"/></svg>
+                        Élevé
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="db-ch" style="height:200px"><canvas id="db-cEvol"></canvas></div>
+        <div class="db-leg" id="db-evol-leg">
+            <span class="db-leg-item"><span class="db-leg-dot" style="background:#003189"></span>Total</span>
+            <span class="db-leg-item"><span class="db-leg-dot" style="background:#b42318"></span>Gravité élevée</span>
+        </div>
+    </div>
+    <div class="db-card">
+        <div class="db-card__head">
+            <span class="db-card__title">Répartition</span>
+            <div class="db-pill">
+                <button type="button" class="db-pill-btn is-on c-red" onclick="dbSetGravViz('gravite',this)">Gravité</button>
+                <button type="button" class="db-pill-btn" onclick="dbSetGravViz('type',this)">Type</button>
+                <button type="button" class="db-pill-btn" onclick="dbSetGravViz('source',this)">Source</button>
+            </div>
+        </div>
+        <div class="db-ch" style="height:168px"><canvas id="db-cGrav"></canvas></div>
+        <div id="db-grav-leg" style="display:flex;flex-direction:column;gap:4px;margin-top:8px"></div>
+    </div>
+</div>
+
+<div class="db-row3">
+    <div class="db-card">
+        <div class="db-card__head">
+            <span class="db-card__title">Par heure</span>
+            <div class="db-pill">
+                <button type="button" class="db-pill-btn is-on c-blue" onclick="dbSetHeure('all',this)">Tous</button>
+                <button type="button" class="db-pill-btn" onclick="dbSetHeure('eleve',this)">Élevé</button>
+            </div>
+        </div>
+        <div class="db-ch" style="height:148px"><canvas id="db-cHeure"></canvas></div>
+        <div style="font-size:10px;color:var(--color-text-muted);margin-top:5px;display:flex;align-items:center;gap:4px">
+            <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#b42318"></span>
+            Heures de pointe (7h-9h · 17h-19h)
+        </div>
+    </div>
+    <div class="db-card">
+        <div class="db-card__head">
+            <span class="db-card__title">Par ligne</span>
+            <div class="db-filter-bar">
+                <div class="db-pill">
+                    <button type="button" class="db-pill-btn is-on c-blue" onclick="dbSetLigne('count',this)">Nb</button>
+                    <button type="button" class="db-pill-btn" onclick="dbSetLigne('score',this)">Score</button>
+                </div>
+                <div class="db-chip-wrap" id="db-cs-ligne">
+                    <button type="button" class="db-chip-btn" id="db-cs-ligne-btn" data-val="8" onclick="dbToggleChip('db-cs-ligne')">
+                        <span class="db-chip-lbl">Top 8</span>
+                        <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
+                    </button>
+                    <div class="db-chip-dd" id="db-cs-ligne-dd">
+                        <div class="db-chip-opt is-sel" onclick="dbPickChip(event,'db-cs-ligne','Top 8',8);dbUpdateLigne()">Top 8</div>
+                        <div class="db-chip-opt" onclick="dbPickChip(event,'db-cs-ligne','Top 5',5);dbUpdateLigne()">Top 5</div>
+                        <div class="db-chip-opt" onclick="dbPickChip(event,'db-cs-ligne','Top 3',3);dbUpdateLigne()">Top 3</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="db-ch" style="height:148px"><canvas id="db-cLigne"></canvas></div>
+    </div>
+    <div class="db-card">
+        <div class="db-card__head">
+            <span class="db-card__title">Jour de la semaine</span>
+            <div class="db-filter-bar">
+                <div class="db-pill">
+                    <button type="button" class="db-pill-btn is-on c-blue" onclick="dbSetJour('all',this)">Tous</button>
+                    <button type="button" class="db-pill-btn" onclick="dbSetJour('eleve',this)">Élevé</button>
+                </div>
+                <button type="button" class="db-icon-btn is-on" id="db-icn-we" title="Inclure/exclure week-end" onclick="dbToggleWE(this)">
+                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="1" y="2" width="12" height="11" rx="2"/><line x1="1" y1="6" x2="13" y2="6"/>
+                        <line x1="5" y1="2" x2="5" y2="6"/><line x1="9" y1="2" x2="9" y2="6"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="db-ch" style="height:148px"><canvas id="db-cJour"></canvas></div>
+    </div>
+</div>
+
+<div class="db-row2">
+    <div class="db-card">
+        <div class="db-card__head">
+            <span class="db-card__title">Conducteurs à surveiller</span>
+            <div class="db-filter-bar">
+                <div class="db-seg" style="padding:2px;gap:1px">
+                    <button type="button" class="db-seg-btn is-on" style="padding:3px 9px;font-size:11px" onclick="dbSetDriver('count',this)">Signalements</button>
+                    <button type="button" class="db-seg-btn" style="padding:3px 9px;font-size:11px" onclick="dbSetDriver('score',this)">Score IA</button>
+                    <button type="button" class="db-seg-btn" style="padding:3px 9px;font-size:11px" onclick="dbSetDriver('recidive',this)">Récidive</button>
+                </div>
+                <div class="db-fsep"></div>
+                <div class="db-chip-wrap" id="db-cs-drv">
+                    <button type="button" class="db-chip-btn" id="db-cs-drv-btn" data-val="all" onclick="dbToggleChip('db-cs-drv')">
+                        <span class="db-chip-lbl">Toutes lignes</span>
+                        <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
+                    </button>
+                    <div class="db-chip-dd" id="db-cs-drv-dd">
+                        <div class="db-chip-opt is-sel" onclick="dbPickChip(event,'db-cs-drv','Toutes lignes','all');dbUpdateDrivers()">Toutes lignes</div>
+                        {% for ligne in dashboard_driver_lines %}
+                        <div class="db-chip-opt" onclick="dbPickChip(event,'db-cs-drv','Ligne {{ ligne }}','{{ ligne|e('js') }}');dbUpdateDrivers()">Ligne {{ ligne }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="db-range-wrap">
+                    <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="var(--color-text-muted)" stroke-width="1.5"><circle cx="6" cy="6" r="4"/><line x1="9.5" y1="9.5" x2="13" y2="13"/></svg>
+                    <input type="range" min="1" max="8" value="1" step="1" id="db-min-sig"
+                           oninput="document.getElementById('db-min-sig-val').textContent=this.value+'+ sig.';dbUpdateDrivers()">
+                    <span class="db-range-val" id="db-min-sig-val">1+ sig.</span>
+                </div>
+            </div>
+        </div>
+        <div class="db-driver-list" id="db-driver-list"></div>
     </div>
 
-    <section class="stat-grid" aria-label="Indicateurs principaux">
-        <article class="stat-card">
-            <h2 class="stat-card__label">Signalements (total)</h2>
-            <p class="stat-card__value">{{ report_count }}</p>
-            <p class="stat-card__hint">Base complète</p>
-            <a href="{{ path('app_report_index') }}" class="stat-card__link">Liste avec filtres →</a>
-        </article>
-        <article class="stat-card">
-            <h2 class="stat-card__label">7 derniers jours</h2>
-            <p class="stat-card__value">{{ reports_last_7_days }}</p>
-            <p class="stat-card__hint">Créés sur cette période</p>
-            <a href="{{ path('app_report_index', { period: '7d' }) }}" class="stat-card__link">Voir cette période →</a>
-        </article>
-        <article class="stat-card">
-            <h2 class="stat-card__label">30 derniers jours</h2>
-            <p class="stat-card__value">{{ reports_last_30_days }}</p>
-            <p class="stat-card__hint">Créés sur cette période</p>
-            <a href="{{ path('app_report_index', { period: '30d' }) }}" class="stat-card__link">Voir cette période →</a>
-        </article>
-        <article class="stat-card">
-            <h2 class="stat-card__label">Conducteurs</h2>
-            <p class="stat-card__value">{{ driver_count }}</p>
-            <p class="stat-card__hint">Fiches conducteur</p>
-            <a href="{{ path('app_driver_index') }}" class="stat-card__link">Voir la liste →</a>
-        </article>
-    </section>
+    <div class="db-card">
+        <div class="db-card__head">
+            <span class="db-card__title">Objectifs & progression</span>
+            <div class="db-pill">
+                <button type="button" class="db-pill-btn is-on c-green" onclick="dbSetObj('annuel',this)">Annuel</button>
+                <button type="button" class="db-pill-btn" onclick="dbSetObj('trimestriel',this)">Trim.</button>
+            </div>
+        </div>
+        <div id="db-goals-content"></div>
+        <div style="margin-top:14px;border-top:1px solid var(--color-border);padding-top:12px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <span style="font-size:11px;font-weight:600;color:var(--color-text-muted)">Tendance 12 mois</span>
+                <div class="db-pill">
+                    <button type="button" class="db-pill-btn is-on c-green" onclick="dbSetSpark('total',this)">Total</button>
+                    <button type="button" class="db-pill-btn" onclick="dbSetSpark('eleve',this)">Élevé</button>
+                </div>
+            </div>
+            <div class="db-ch" style="height:65px"><canvas id="db-cSpark"></canvas></div>
+        </div>
+    </div>
+</div>
 
-    <section class="dashboard-layout" aria-label="Tendances sur 30 jours">
-        <div class="panel">
-            <div class="panel__header">
-                <h2 class="panel__title">Répartition par gravité (30&nbsp;j.)</h2>
-                <a href="{{ path('app_report_index', { period: '30d' }) }}" class="panel__action">Liste filtrée</a>
-            </div>
-            {% if severity_breakdown_30d is empty %}
-                <p class="panel__empty">Aucun signalement sur les 30 derniers jours.</p>
-            {% else %}
-                <ul class="breakdown-list" role="list">
-                    {% for row in severity_breakdown_30d %}
-                        <li class="breakdown-list__item">
-                            <a href="{{ path('app_report_index', { period: '30d', severity: row.severity }) }}" class="breakdown-list__link">
-                                <span class="report-shortlist__severity report-shortlist__severity--{{ row.severity|default('')|lower }}">{{ row.severity ?? '—' }}</span>
-                                <span class="breakdown-list__count">{{ row.cnt }}</span>
-                            </a>
-                        </li>
+<section class="panel" aria-labelledby="db-reports-heading">
+    <div class="panel__header">
+        <h2 class="panel__title" id="db-reports-heading">Derniers signalements</h2>
+        <div class="panel__header-actions">
+            <span class="panel__meta">
+                {% if report_count > 0 %}Page {{ dashboard_page }} / {{ dashboard_total_pages }} · {{ report_count }} total{% else %}0 signalement{% endif %}
+            </span>
+            <a href="{{ path('app_report_index') }}" class="panel__action">Filtres avancés →</a>
+        </div>
+    </div>
+    {% if dashboard_reports is empty %}
+        <p class="panel__empty">Aucun signalement pour le moment.</p>
+    {% else %}
+        <div class="table-wrap table-wrap--flush">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Date</th>
+                        <th scope="col">Gravité</th>
+                        <th scope="col">Type</th>
+                        <th scope="col">Résumé</th>
+                        <th scope="col">Conducteur</th>
+                        <th scope="col">Bus</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in dashboard_reports %}
+                    {% set d_sev = report.severity|default('')|lower %}
+                    {% set d_sev_cls = {
+                        'high': 'report-shortlist__severity--high',
+                        'critical': 'report-shortlist__severity--critical',
+                        'medium': 'report-shortlist__severity--medium',
+                        'low': 'report-shortlist__severity--low',
+                        'positive': 'report-shortlist__severity--low',
+                    }[d_sev]|default('') %}
+                    {% set d_sev_fr = { 'high': 'Élevée', 'critical': 'Critique', 'medium': 'Moyenne', 'low': 'Faible', 'positive': 'Positive' }[d_sev]|default(report.severity) %}
+                    <tr>
+                        <td><time datetime="{{ report.createdAt ? report.createdAt|date('c') : '' }}">{{ report.createdAt ? report.createdAt|date('d/m/Y H:i') : '—' }}</time></td>
+                        <td><span class="report-shortlist__severity report-shortlist__severity--prominent {{ d_sev_cls }}">{{ d_sev_fr }}</span></td>
+                        <td>{{ report.situationType }}</td>
+                        <td>{% set txt = report.situationSummary ?: report.description %}{{ txt|length > 80 ? txt|slice(0,80)~'…' : txt }}</td>
+                        <td>{% if report.driver %}<a href="{{ path('app_report_index', {driver_id: report.driver.id}) }}">#{{ report.driver.id }}</a>{% else %}—{% endif %}</td>
+                        <td>{% if report.bus %}<a href="{{ path('app_report_index', {bus_id: report.bus.id}) }}">#{{ report.bus.id }}</a>{% else %}—{% endif %}</td>
+                        <td><a href="{{ path('app_report_show', {id: report.id}) }}">Détail</a></td>
+                    </tr>
                     {% endfor %}
-                </ul>
-            {% endif %}
+                </tbody>
+            </table>
         </div>
-        <div class="panel">
-            <div class="panel__header">
-                <h2 class="panel__title">Types de situation les plus fréquents (30&nbsp;j.)</h2>
-                <a href="{{ path('app_report_index', { period: '30d' }) }}" class="panel__action">Tout voir</a>
-            </div>
-            {% if situation_type_breakdown_30d is empty %}
-                <p class="panel__empty">Aucun signalement sur les 30 derniers jours.</p>
-            {% else %}
-                <ol class="breakdown-list breakdown-list--ranked" role="list">
-                    {% for row in situation_type_breakdown_30d %}
-                        <li class="breakdown-list__item">
-                            <a href="{{ path('app_report_index', { period: '30d', situation_type: row.situation_type }) }}" class="breakdown-list__link">
-                                <span class="breakdown-list__label">{{ row.situation_type }}</span>
-                                <span class="breakdown-list__count">{{ row.cnt }}</span>
-                            </a>
-                        </li>
-                    {% endfor %}
-                </ol>
-            {% endif %}
-        </div>
-    </section>
-
-    <section class="panel" aria-labelledby="dashboard-all-reports-heading">
-        <div class="panel__header">
-            <h2 class="panel__title" id="dashboard-all-reports-heading">Tous les signalements</h2>
-            <div class="panel__header-actions">
-                <span class="panel__meta" aria-live="polite">
-                    {% if report_count > 0 %}
-                        Page {{ dashboard_page }} sur {{ dashboard_total_pages }} · {{ report_count }} au total
-                    {% else %}
-                        0 signalement
-                    {% endif %}
-                </span>
-                <a href="{{ path('app_report_index') }}" class="panel__action">Filtres avancés (gravité, bus, conducteur…)</a>
-            </div>
-        </div>
-        {% if dashboard_reports is empty %}
-            <p class="panel__empty">Aucun signalement pour le moment. Les voyageurs peuvent en soumettre via le formulaire public.</p>
-        {% else %}
-            <div class="table-wrap table-wrap--flush">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th scope="col">Créé le</th>
-                            <th scope="col">Gravité</th>
-                            <th scope="col">Type de situation</th>
-                            <th scope="col">Résumé</th>
-                            <th scope="col">Conducteur</th>
-                            <th scope="col">Bus</th>
-                            <th scope="col">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for report in dashboard_reports %}
-                            <tr>
-                                <td>
-                                    <time datetime="{{ report.createdAt ? report.createdAt|date('c') : '' }}">
-                                        {{ report.createdAt ? report.createdAt|date('d/m/Y H:i') : '—' }}
-                                    </time>
-                                </td>
-                                <td>
-                                    <span class="report-shortlist__severity report-shortlist__severity--{{ report.severity|default('')|lower }}">{{ report.severity }}</span>
-                                </td>
-                                <td>{{ report.situationType }}</td>
-                                <td>
-                                    {% set text = report.situationSummary ?: report.description %}
-                                    {{ text|length > 90 ? text|slice(0, 90) ~ '…' : text }}
-                                </td>
-                                <td>
-                                    {% if report.driver %}
-                                        <a href="{{ path('app_report_index', { driver_id: report.driver.id }) }}">#{{ report.driver.id }}</a>
-                                    {% else %}
-                                        —
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if report.bus %}
-                                        <a href="{{ path('app_report_index', { bus_id: report.bus.id }) }}">#{{ report.bus.id }}</a>
-                                    {% else %}
-                                        —
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <a href="{{ path('app_report_show', { id: report.id }) }}">Détail</a>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% if dashboard_total_pages > 1 %}
-                <nav class="pagination-bar" aria-label="Pagination du tableau des signalements">
-                    {% if dashboard_page > 1 %}
-                        <a rel="prev" class="btn btn--secondary" href="{{ path('app_home', { page: dashboard_page - 1 }) }}">Page précédente</a>
-                    {% else %}
-                        <span class="pagination-bar__spacer" aria-hidden="true"></span>
-                    {% endif %}
-                    <span class="pagination-bar__status">Page {{ dashboard_page }} / {{ dashboard_total_pages }}</span>
-                    {% if dashboard_page < dashboard_total_pages %}
-                        <a rel="next" class="btn btn--secondary" href="{{ path('app_home', { page: dashboard_page + 1 }) }}">Page suivante</a>
-                    {% else %}
-                        <span class="pagination-bar__spacer" aria-hidden="true"></span>
-                    {% endif %}
-                </nav>
-            {% endif %}
+        {% if dashboard_total_pages > 1 %}
+        <nav class="pagination-bar" aria-label="Pagination">
+            {% if dashboard_page > 1 %}<a rel="prev" class="btn btn--secondary" href="{{ path('app_home', {page: dashboard_page-1}) }}">Précédent</a>{% else %}<span class="pagination-bar__spacer"></span>{% endif %}
+            <span class="pagination-bar__status">Page {{ dashboard_page }} / {{ dashboard_total_pages }}</span>
+            {% if dashboard_page < dashboard_total_pages %}<a rel="next" class="btn btn--secondary" href="{{ path('app_home', {page: dashboard_page+1}) }}">Suivant</a>{% else %}<span class="pagination-bar__spacer"></span>{% endif %}
+        </nav>
         {% endif %}
-    </section>
+    {% endif %}
+</section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+(function(){
+const KPI_BY_PERIOD = {{ kpi_by_period|json_encode|raw }};
+const REPORT_LIST_URL = {{ path('app_report_index')|json_encode|raw }};
+
+const DRIVERS = {{ top_drivers_at_risk|json_encode|raw }};
+
+const DATA = {
+    jour:{
+        l:{{ chart_par_jour.labels|json_encode|raw }},
+        tot:{{ chart_par_jour.values|json_encode|raw }},
+        elv:{{ chart_par_jour.valuesEleve|json_encode|raw }}
+    },
+    semaine:{
+        l:{{ chart_par_semaine.labels|json_encode|raw }},
+        tot:{{ chart_par_semaine.tot|json_encode|raw }},
+        elv:{{ chart_par_semaine.elv|json_encode|raw }}
+    },
+    mois:{
+        l:{{ chart_par_mois.labels|json_encode|raw }},
+        tot:{{ chart_par_mois.values|json_encode|raw }},
+        elv:{{ chart_par_mois.valuesEleve|json_encode|raw }}
+    }
+};
+
+const CHART_HEURE = {
+    l:{{ chart_par_heure.labels|json_encode|raw }},
+    values:{{ chart_par_heure.values|json_encode|raw }},
+    valuesEleve:{{ chart_par_heure.valuesEleve|json_encode|raw }}
+};
+
+const CHART_JOUR_SEM = {
+    full:{
+        l:{{ chart_par_jour_semaine.labels|json_encode|raw }},
+        all:{{ chart_par_jour_semaine.values|json_encode|raw }},
+        eleve:{{ chart_par_jour_semaine.valuesEleve|json_encode|raw }}
+    },
+    weekdays:{
+        l:{{ chart_par_jour_semaine_weekdays.labels|json_encode|raw }},
+        all:{{ chart_par_jour_semaine_weekdays.values|json_encode|raw }},
+        eleve:{{ chart_par_jour_semaine_weekdays.valuesEleve|json_encode|raw }}
+    }
+};
+
+const CHART_LIGNES = {
+    labels:{{ chart_lignes.labels|json_encode|raw }},
+    counts:{{ chart_lignes.counts|json_encode|raw }},
+    scores:{{ chart_lignes.scores|json_encode|raw }}
+};
+
+const GC = {
+    gravite:{
+        l:{{ chart_gravite.labels|json_encode|raw }},
+        d:{{ chart_gravite.values|json_encode|raw }},
+        c:['#b42318','#d97706','#059669','#888780']
+    },
+    type:{
+        l:{{ chart_types.labels|json_encode|raw }},
+        d:{{ chart_types.values|json_encode|raw }},
+        c:['#003189','#7c3aed','#b42318','#d97706','#059669','#0ea5e9','#ec4899','#888780']
+    },
+    source:{
+        l:{{ chart_source.labels|json_encode|raw }},
+        d:{{ chart_source.values|json_encode|raw }},
+        c:['#003189','#059669','#ec4899','#d97706','#7c3aed','#888780']
+    }
+};
+
+const SPARK = {
+    labels:{{ chart_annee.labels|json_encode|raw }},
+    values:{{ chart_annee.values|json_encode|raw }},
+    valuesEleve:{{ chart_annee.valuesEleve|json_encode|raw }}
+};
+
+window.dbDestroyDashboardCharts = function(){
+    ['db-cEvol','db-cGrav','db-cHeure','db-cLigne','db-cJour','db-cSpark'].forEach(function(id){
+        var c=document.getElementById(id);
+        if(c&&c._ch){c._ch.destroy();c._ch=null;}
+    });
+};
+if (!window.__decodeDashboardBeforeCache) {
+    window.__decodeDashboardBeforeCache = true;
+    document.addEventListener('turbo:before-cache', window.dbDestroyDashboardCharts);
+}
+
+function dbRunCharts(){
+    if(typeof Chart==='undefined'){return false;}
+
+    var isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+    var gridC  = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+    var tickC  = isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)';
+
+    Chart.defaults.font.size   = 10;
+    Chart.defaults.font.family = getComputedStyle(document.body).getPropertyValue('--font-sans') || 'system-ui';
+    Chart.defaults.color       = tickC;
+
+    var bO = function(ext){ext=ext||{};return Object.assign({responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{bodyFont:{size:11},titleFont:{size:11}}}},ext);};
+    var xy = function(mt){mt=mt||4;return {x:{grid:{display:false},ticks:{color:tickC,maxTicksLimit:8}},y:{grid:{color:gridC},beginAtZero:true,ticks:{color:tickC,maxTicksLimit:mt}}};};
+    function dc(id,cfg){
+        var c=document.getElementById(id);
+        if(c&&c._ch)c._ch.destroy();
+        if(!c)return;
+        c._ch=new Chart(c,cfg);
+        return c._ch;
+    }
+
+    var evolGran='jour', showTotal=true, showEleve=true;
+    var gravViz='gravite', heureMode='all', ligneMode='count', jourMode='all', weMode=true;
+    var driverMode='count', objMode='annuel', sparkMode='total';
+
+    var globalSeg=document.getElementById('db-global-seg');
+    if(globalSeg){
+        var onGlobal=globalSeg.querySelector('.db-seg-btn.is-on');
+        var dp=onGlobal&&onGlobal.getAttribute('data-period');
+        var evolByPeriod={'7d':'jour','30d':'semaine','90d':'semaine','1an':'mois'};
+        if(dp&&evolByPeriod[dp]){evolGran=evolByPeriod[dp];}
+    }
+    var evolGranWrap=document.getElementById('db-evol-gran');
+    if(evolGranWrap){
+        evolGranWrap.querySelectorAll('.db-seg-btn').forEach(function(b){
+            b.classList.toggle('is-on', b.getAttribute('data-gran')===evolGran);
+        });
+    }
+
+    function dbUpdateEvol(){
+        var d=DATA[evolGran];
+        if(!d||!d.l||d.l.length===0){return;}
+        if(!showTotal&&!showEleve){showTotal=showEleve=true;}
+        var ds=[];
+        if(showTotal) ds.push({label:'Total',data:d.tot,borderColor:'#003189',backgroundColor:'rgba(0,49,137,0.06)',borderWidth:2,pointRadius:0,fill:true,tension:0.38});
+        if(showEleve) ds.push({label:'Élevé',data:d.elv,borderColor:'#b42318',backgroundColor:'rgba(180,35,24,0.04)',borderWidth:1.5,pointRadius:0,fill:true,tension:0.38,borderDash:[4,3]});
+        document.getElementById('db-ev-total').classList.toggle('is-on',showTotal);
+        document.getElementById('db-ev-eleve').classList.toggle('is-on',showEleve);
+        dc('db-cEvol',{type:'line',data:{labels:d.l,datasets:ds},options:bO({scales:xy()})});
+    }
+    window.dbSetEvol=function(m,el){
+        evolGran=m;
+        el.closest('.db-seg').querySelectorAll('.db-seg-btn').forEach(function(b){b.classList.remove('is-on');});
+        el.classList.add('is-on');
+        dbUpdateEvol();
+    };
+    window.dbToggleEvSerie=function(s,el){
+        if(s==='total') showTotal=!showTotal; else showEleve=!showEleve;
+        el.classList.toggle('is-on');
+        dbUpdateEvol();
+    };
+
+    function dbUpdateGrav(){
+        var g=GC[gravViz];
+        var legHTML=g.l.map(function(l,i){return '<span class="db-leg-item"><span class="db-leg-dot" style="background:'+(g.c[i]||'#888')+'"></span>'+l+(g.d[i]?' — '+g.d[i]:'')+'</span>';}).join('');
+        document.getElementById('db-grav-leg').innerHTML=legHTML;
+        dc('db-cGrav',{type:'doughnut',data:{labels:g.l,datasets:[{data:g.d,backgroundColor:g.c,borderWidth:2,borderColor:isDark?'#111':'#fff'}]},options:Object.assign(bO(),{cutout:'62%'})});
+    }
+    window.dbSetGravViz=function(v,el){
+        gravViz=v;
+        el.closest('.db-pill').querySelectorAll('.db-pill-btn').forEach(function(b){b.classList.remove('is-on','c-red','c-blue','c-green');});
+        el.classList.add('is-on','c-red');
+        dbUpdateGrav();
+    };
+
+    function dbUpdateHeure(){
+        var h=CHART_HEURE.l;
+        var v=heureMode==='all'?CHART_HEURE.values:CHART_HEURE.valuesEleve;
+        dc('db-cHeure',{type:'bar',data:{labels:h,datasets:[{data:v,backgroundColor:v.map(function(_,i){return (i>=7&&i<=9)||(i>=17&&i<=19)?'rgba(180,35,24,0.8)':'rgba(0,49,137,0.45)';}),borderRadius:2,borderSkipped:false}]},options:bO({scales:{x:{grid:{display:false},ticks:{color:tickC,maxTicksLimit:12,autoSkip:false,maxRotation:0,font:{size:8}}},y:{grid:{color:gridC},beginAtZero:true,ticks:{color:tickC,maxTicksLimit:3}}}})});
+    }
+    window.dbSetHeure=function(m,el){
+        heureMode=m;
+        el.closest('.db-pill').querySelectorAll('.db-pill-btn').forEach(function(b){b.classList.remove('is-on','c-red','c-blue','c-green');});
+        el.classList.add('is-on','c-blue');
+        dbUpdateHeure();
+    };
+
+    function dbUpdateLigne(){
+        var top=parseInt(document.getElementById('db-cs-ligne-btn').dataset.val,10)||8;
+        var lignes=CHART_LIGNES.labels.slice(0,top);
+        var counts=CHART_LIGNES.counts.slice(0,top);
+        var scores=CHART_LIGNES.scores.slice(0,top);
+        var v=ligneMode==='count'?counts:scores;
+        dc('db-cLigne',{type:'bar',data:{labels:lignes,datasets:[{data:v,backgroundColor:v.map(function(_,i){return i===0?'rgba(180,35,24,0.8)':ligneMode==='score'?'rgba(124,58,237,0.6)':'rgba(0,49,137,0.55)';}),borderRadius:3,borderSkipped:false}]},options:bO({scales:{x:{grid:{display:false},ticks:{color:tickC}},y:{grid:{color:gridC},beginAtZero:true,ticks:{color:tickC,maxTicksLimit:4}}}})});
+    }
+    window.dbSetLigne=function(m,el){
+        ligneMode=m;
+        el.closest('.db-pill').querySelectorAll('.db-pill-btn').forEach(function(b){b.classList.remove('is-on','c-red','c-blue','c-green');});
+        el.classList.add('is-on','c-blue');
+        dbUpdateLigne();
+    };
+    window.dbUpdateLigne=dbUpdateLigne;
+
+    function dbUpdateJour(){
+        var pack=weMode?CHART_JOUR_SEM.full:CHART_JOUR_SEM.weekdays;
+        var v=jourMode==='all'?pack.all:pack.eleve;
+        dc('db-cJour',{type:'bar',data:{labels:pack.l,datasets:[{data:v,backgroundColor:v.map(function(_,i){return i>=5?'rgba(136,135,128,0.5)':jourMode==='eleve'?'rgba(180,35,24,0.7)':'rgba(0,49,137,0.65)';}),borderRadius:4,borderSkipped:false}]},options:bO({scales:{x:{grid:{display:false},ticks:{color:tickC}},y:{grid:{color:gridC},beginAtZero:true,ticks:{color:tickC,maxTicksLimit:4}}}})});
+    }
+    window.dbSetJour=function(m,el){
+        jourMode=m;
+        el.closest('.db-pill').querySelectorAll('.db-pill-btn').forEach(function(b){b.classList.remove('is-on','c-red','c-blue','c-green');});
+        el.classList.add('is-on','c-blue');
+        dbUpdateJour();
+    };
+    window.dbToggleWE=function(el){weMode=!weMode;el.classList.toggle('is-on');dbUpdateJour();};
+
+    window.dbUpdateDrivers=function(){
+        var minSig=parseInt(document.getElementById('db-min-sig').value,10)||1;
+        var ligne=document.getElementById('db-cs-drv-btn').dataset.val||'all';
+        var list=DRIVERS.filter(function(d){return (ligne==='all'||String(d.ligne)===String(ligne))&&d.count>=minSig;});
+        if(driverMode==='score') list=list.slice().sort(function(a,b){return b.score_moyen-a.score_moyen;});
+        else if(driverMode==='recidive') list=list.slice().sort(function(a,b){return b.count-a.count;});
+        function getV(d){return driverMode==='score'?parseFloat(d.score_moyen):d.count;}
+        function getMax(){return driverMode==='score'?10:10;}
+        function getLbl(d){return driverMode==='score'?parseFloat(d.score_moyen).toFixed(1)+'/10':d.count+' sig.';}
+        function getColor(d){return d.count>=5?{c:'#b42318',bg:'#fff1f0'}:d.count>=3?{c:'#d97706',bg:'#fef9ee'}:{c:'#059669',bg:'#ecfdf5'};}
+        var listEl=document.getElementById('db-driver-list');
+        var sep=REPORT_LIST_URL.indexOf('?')>=0?'&':'?';
+        listEl.innerHTML=list.length?list.map(function(d,i){
+            var col=getColor(d);
+            var href=REPORT_LIST_URL+sep+'driver_id='+encodeURIComponent(d.id);
+            return '<div class="db-driver-item">'+
+                '<div class="db-driver-rank" style="background:'+col.bg+';color:'+col.c+'">'+(i+1)+'</div>'+
+                '<div class="db-driver-info"><div class="db-driver-name">'+String(d.matricule).replace(/</g,'&lt;')+'</div>'+
+                '<div class="db-driver-meta">Ligne '+String(d.ligne).replace(/</g,'&lt;')+'</div></div>'+
+                '<div class="db-driver-bar-wrap"><div class="db-driver-bar"><div class="db-driver-bar-fill" style="width:'+Math.round(getV(d)/getMax()*100)+'%;background:'+col.c+'"></div></div>'+
+                '<div class="db-driver-cnt">'+getLbl(d)+'</div></div>'+
+                '<span class="db-badge" style="background:'+col.bg+';color:'+col.c+'">'+(d.count>=5?'Critique':d.count>=3?'Vigilance':'Suivi')+'</span>'+
+                '<a href="'+href+'" style="font-size:11px;color:var(--color-primary)">Voir →</a></div>';
+        }).join(''):'<div style="text-align:center;padding:20px;font-size:12px;color:var(--color-text-muted)">Aucun conducteur pour ces filtres</div>';
+    };
+    window.dbSetDriver=function(m,el){
+        driverMode=m;
+        el.closest('.db-seg').querySelectorAll('.db-seg-btn').forEach(function(b){b.classList.remove('is-on');});
+        el.classList.add('is-on');
+        dbUpdateDrivers();
+    };
+
+    function dbUpdateGoals(){
+        var G=objMode==='annuel'?[
+            ['Réduction signalements graves',68,'#b42318'],
+            ['Taux traitement (cible 85%)',{{ treatment_rate }},'#003189'],
+            ['Conducteurs améliorés',{{ drivers_improved_pct }},'#059669'],
+            ['Délai traitement < 24h',55,'#d97706'],
+            ['Automatisation RS',82,'#7c3aed'],
+        ]:[
+            ['Réduction T2 vs T1',45,'#b42318'],
+            ['Taux traitement ce trim.',78,'#003189'],
+            ['Conducteurs suivis améliorés',60,'#059669'],
+            ['Satisfaction voyageur',71,'#d97706'],
+            ['Workflow IA opérationnel',90,'#7c3aed'],
+        ];
+        document.getElementById('db-goals-content').innerHTML=G.map(function(row){
+            var l=row[0],v=row[1],c=row[2];
+            return '<div class="db-goal-row"><span>'+l+'</span><span style="font-weight:600;color:'+(v<50?'#b42318':v<75?'#d97706':'#059669')+'">'+Math.round(v)+'%</span></div>'+
+                '<div class="db-goal-bg"><div class="db-goal-fill" style="width:'+Math.round(v)+'%;background:'+c+'"></div></div>';
+        }).join('');
+    }
+    window.dbSetObj=function(m,el){
+        objMode=m;
+        el.closest('.db-pill').querySelectorAll('.db-pill-btn').forEach(function(b){b.classList.remove('is-on','c-red','c-blue','c-green');});
+        el.classList.add('is-on','c-green');
+        dbUpdateGoals();
+    };
+
+    function dbUpdateSpark(){
+        var v=sparkMode==='total'?SPARK.values:SPARK.valuesEleve;
+        var c=sparkMode==='total'?'#059669':'#b42318';
+        dc('db-cSpark',{type:'line',data:{labels:SPARK.labels,datasets:[{data:v,borderColor:c,backgroundColor:c+'1a',borderWidth:1.5,pointRadius:0,fill:true,tension:0.4}]},options:bO({scales:{x:{display:false},y:{display:false,beginAtZero:true}}})});
+    }
+    window.dbSetSpark=function(m,el){
+        sparkMode=m;
+        el.closest('.db-pill').querySelectorAll('.db-pill-btn').forEach(function(b){b.classList.remove('is-on','c-red','c-blue','c-green');});
+        el.classList.add('is-on',m==='total'?'c-green':'c-red');
+        dbUpdateSpark();
+    };
+
+    window.dbSetGlobal=function(p,el){
+        el.closest('.db-seg').querySelectorAll('.db-seg-btn').forEach(function(b){b.classList.remove('is-on');});
+        el.classList.add('is-on');
+        var k=KPI_BY_PERIOD[p];
+        if(!k) return;
+        document.getElementById('db-kv1').textContent=k.reports;
+        document.getElementById('db-kv2').textContent=k.high;
+        document.getElementById('db-kv3').textContent=k.treatment+'%';
+        document.getElementById('db-kv4').textContent=k.drivers_at_risk;
+        var map={'7d':'jour','30d':'semaine','90d':'semaine','1an':'mois'};
+        evolGran=map[p];
+        var eg=document.getElementById('db-evol-gran');
+        if(eg){eg.querySelectorAll('.db-seg-btn').forEach(function(b){b.classList.toggle('is-on', b.getAttribute('data-gran')===evolGran);});}
+        dbUpdateEvol();
+    };
+
+    window.dbToggleChip=function(id){
+        var btn=document.getElementById(id+'-btn');
+        var dd=document.getElementById(id+'-dd');
+        var open=dd.classList.contains('is-open');
+        document.querySelectorAll('.db-chip-dd').forEach(function(d){d.classList.remove('is-open');});
+        document.querySelectorAll('.db-chip-btn').forEach(function(b){b.classList.remove('is-open');});
+        if(!open){dd.classList.add('is-open');btn.classList.add('is-open');}
+    };
+    window.dbPickChip=function(ev,id,label,val){
+        if(!ev||!ev.currentTarget){return;}
+        var btn=document.getElementById(id+'-btn');
+        if(!btn){return;}
+        var lbl=btn.querySelector('.db-chip-lbl');
+        if(lbl){lbl.textContent=label;}
+        btn.dataset.val=val;
+        btn.classList.toggle('has-val',String(val)!=='all'&&String(val)!=='8');
+        document.querySelectorAll('#'+id+'-dd .db-chip-opt').forEach(function(o){o.classList.remove('is-sel');});
+        ev.currentTarget.classList.add('is-sel');
+        var dd=document.getElementById(id+'-dd');
+        if(dd){dd.classList.remove('is-open');}
+        btn.classList.remove('is-open');
+    };
+
+    dbUpdateEvol();dbUpdateGrav();dbUpdateHeure();dbUpdateLigne();dbUpdateJour();
+    dbUpdateDrivers();dbUpdateGoals();dbUpdateSpark();
+    return true;
+}
+
+function initDecodeDashboard(){
+    if (!document.querySelector('.db-wrap')) {
+        return;
+    }
+    if (typeof Chart === 'undefined') {
+        window.__dbChartWait = (window.__dbChartWait || 0) + 1;
+        if (window.__dbChartWait > 120) {
+            return;
+        }
+        setTimeout(initDecodeDashboard, 50);
+        return;
+    }
+    window.__dbChartWait = 0;
+    dbRunCharts();
+}
+
+if (!window.__decodeDashboardTurboLoad) {
+    window.__decodeDashboardTurboLoad = true;
+    document.addEventListener('turbo:load', initDecodeDashboard);
+}
+initDecodeDashboard();
+document.addEventListener('click',function(e){
+    if(!e.target.closest('.db-chip-wrap')){
+        document.querySelectorAll('.db-chip-dd').forEach(function(d){d.classList.remove('is-open');});
+        document.querySelectorAll('.db-chip-btn').forEach(function(b){b.classList.remove('is-on');});
+    }
+});
+})();
+</script>
 {% endblock %}

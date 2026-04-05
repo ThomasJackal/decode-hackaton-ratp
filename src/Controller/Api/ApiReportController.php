@@ -161,6 +161,9 @@ final class ApiReportController extends AbstractController
             'severity' => $report->getSeverity(),
             'created_at' => $report->getCreatedAt()?->format(\DateTimeInterface::ATOM),
             'metadata' => $report->getMetadata(),
+            'closed_at' => $report->getClosedAt()?->format(\DateTimeInterface::ATOM),
+            'closure_reason' => $report->getClosureReason(),
+            'closed_by_username' => $report->getClosedBy()?->getUserIdentifier(),
         ];
     }
 }

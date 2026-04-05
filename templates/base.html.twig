@@ -5,7 +5,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{% block title %}RATP Bus — Gestion{% endblock %}</title>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>🚌</text></svg>">
+        {% set is_inspector_user = app.user and 'ROLE_INSPECTOR' in app.user.getRoles() %}
         {% block stylesheets %}
+            {# Toujours servir le CSS principal en <link> (cache Symfony / ordre de chargement plus fiable que seul l’import JS). #}
+            <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
         {% endblock %}
 
         {% block javascripts %}

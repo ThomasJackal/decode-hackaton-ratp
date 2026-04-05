@@ -45,21 +45,21 @@ class ReportSubmissionType extends AbstractType
                 ->add('lineId', TextType::class, [
                     'mapped' => false,
                     'label' => 'Ligne',
-                    'help' => 'Identifiant ou code de la ligne.',
+                    'help' => 'Code de la ligne ; propose des suggestions à la frappe.',
                     'constraints' => [new NotBlank(message: 'Indiquez la ligne.')],
                     'attr' => ['autocomplete' => 'off'],
                 ])
                 ->add('stopId', TextType::class, [
                     'mapped' => false,
                     'label' => 'Arrêt',
-                    'help' => 'Identifiant ou nom de l’arrêt.',
+                    'help' => 'Code de l’arrêt ; propositions filtrées depuis le référentiel.',
                     'constraints' => [new NotBlank(message: 'Indiquez l’arrêt.')],
                     'attr' => ['autocomplete' => 'off'],
                 ])
                 ->add('direction', TextType::class, [
                     'mapped' => false,
                     'label' => 'Direction',
-                    'help' => 'Sens ou terminus (ex. nord, A→B, …).',
+                    'help' => 'Code ou libellé (selon la ligne choisie).',
                     'constraints' => [new NotBlank(message: 'Indiquez la direction.')],
                     'attr' => ['autocomplete' => 'off'],
                 ]);

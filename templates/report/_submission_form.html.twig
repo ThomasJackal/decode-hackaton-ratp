@@ -1,6 +1,9 @@
 {% set prefilled_bus_id = prefilled_bus_id|default(null) %}
 {% set form_action = prefilled_bus_id ? path('app_report_new', { busId: prefilled_bus_id }) : path('app_report_new') %}
 {% set bus_resolved_class = prefilled_bus_id ? 'report-submission-form--bus-resolved' : '' %}
+{% set transit_suggest_url = path('app_report_transit_suggest') %}
+{# Sélecteur fiable : Symfony impose id report_submission_lineId, pas un id passé dans attr. #}
+{% set transit_line_field_selector = '[name="report_submission[lineId]"]' %}
 
 {{ form_start(form, { action: form_action, attr: {
     class: 'report-submission-form ' ~ bus_resolved_class,
@@ -54,30 +57,97 @@
 						{{ form_errors(form.busIdentifier) }}
 					</div>
 				{% else %}
-					<div class="report-field">
+					{% set line_listbox_id = form.lineId.vars.id ~ '_listbox' %}
+					{% set direction_listbox_id = form.direction.vars.id ~ '_listbox' %}
+					{% set stop_listbox_id = form.stopId.vars.id ~ '_listbox' %}
+					<div
+						class="report-field report-field--combobox"
+						data-controller="transit-suggest"
+						data-transit-suggest-field-value="line"
+						data-transit-suggest-suggest-url-value="{{ transit_suggest_url|e('html_attr') }}"
+					>
 						{{ form_label(form.lineId, null, { label_attr: { class: 'report-field__label' } }) }}
-						{{ form_widget(form.lineId, { attr: form.lineId.vars.attr|merge({
-                                class: 'report-field__input',
-                                placeholder: 'Ex : 42, 91, 38…',
+						<div class="report-combobox">
+							{{ form_widget(form.lineId, { attr: form.lineId.vars.attr|merge({
+                                class: 'report-field__input report-combobox__input',
+                                placeholder: 'Ex : 42, 91…',
+                                role: 'combobox',
+                                autocomplete: 'off',
+                                'data-transit-suggest-target': 'input',
+                                'aria-controls': line_listbox_id,
+                                'aria-haspopup': 'listbox',
+                                'data-action': 'focus->transit-suggest#onFocus input->transit-suggest#onInput keydown->transit-suggest#onKeydown',
                             }) }) }}
+							<div
+								class="report-combobox__menu"
+								id="{{ line_listbox_id }}"
+								data-transit-suggest-target="menu"
+								hidden
+								role="listbox"
+								data-action="mousedown->transit-suggest#onMenuMouseDown"
+							></div>
+						</div>
 						{{ form_errors(form.lineId) }}
 						{{ form_help(form.lineId) }}
 					</div>
-					<div class="report-field">
+					<div
+						class="report-field report-field--combobox"
+						data-controller="transit-suggest"
+						data-transit-suggest-field-value="direction"
+						data-transit-suggest-suggest-url-value="{{ transit_suggest_url|e('html_attr') }}"
+						data-transit-suggest-line-input-selector-value="{{ transit_line_field_selector|e('html_attr') }}"
+					>
 						{{ form_label(form.direction, null, { label_attr: { class: 'report-field__label' } }) }}
-						{{ form_widget(form.direction, { attr: form.direction.vars.attr|merge({
-                                class: 'report-field__input',
-                                placeholder: 'Sens ou terminus',
+						<div class="report-combobox">
+							{{ form_widget(form.direction, { attr: form.direction.vars.attr|merge({
+                                class: 'report-field__input report-combobox__input',
+                                placeholder: 'Code ou sens (ex. A, B)',
+                                role: 'combobox',
+                                autocomplete: 'off',
+                                'data-transit-suggest-target': 'input',
+                                'aria-controls': direction_listbox_id,
+                                'aria-haspopup': 'listbox',
+                                'data-action': 'focus->transit-suggest#onFocus input->transit-suggest#onInput keydown->transit-suggest#onKeydown',
                             }) }) }}
+							<div
+								class="report-combobox__menu"
+								id="{{ direction_listbox_id }}"
+								data-transit-suggest-target="menu"
+								hidden
+								role="listbox"
+								data-action="mousedown->transit-suggest#onMenuMouseDown"
+							></div>
+						</div>
 						{{ form_errors(form.direction) }}
 						{{ form_help(form.direction) }}
 					</div>
-					<div class="report-field">
+					<div
+						class="report-field report-field--combobox"
+						data-controller="transit-suggest"
+						data-transit-suggest-field-value="stop"
+						data-transit-suggest-suggest-url-value="{{ transit_suggest_url|e('html_attr') }}"
+					>
 						{{ form_label(form.stopId, null, { label_attr: { class: 'report-field__label' } }) }}
-						{{ form_widget(form.stopId, { attr: form.stopId.vars.attr|merge({
-                                class: 'report-field__input',
-                                placeholder: 'Identifiant ou nom de l’arrêt',
+						<div class="report-combobox">
+							{{ form_widget(form.stopId, { attr: form.stopId.vars.attr|merge({
+                                class: 'report-field__input report-combobox__input',
+                                placeholder: 'Code arrêt (ex. REP, GARE)',
+                                role: 'combobox',
+                                autocomplete: 'off',
+                                'data-transit-suggest-target': 'input',
+                                'aria-controls': stop_listbox_id,
+                                'aria-haspopup': 'listbox',
+                                'data-action': 'focus->transit-suggest#onFocus input->transit-suggest#onInput keydown->transit-suggest#onKeydown',
                             }) }) }}
+							<div
+								class="report-combobox__menu"
+								id="{{ stop_listbox_id }}"
+								data-transit-suggest-target="menu"
+								hidden
+								role="listbox"
+								data-action="mousedown->transit-suggest#onMenuMouseDown"
+							></div>
+						</div>
 						{{ form_errors(form.stopId) }}
 						{{ form_help(form.stopId) }}
 					</div>

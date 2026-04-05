@@ -1,20 +1,21 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Merci{% endblock %}
+{% block title %}Merci
+{% endblock %}
 
 {% block body %}
-    <div class="page-intro">
-        <h1 class="page-title">Merci pour votre signalement</h1>
-        <p class="page-subtitle">Votre message a bien été transmis. Les équipes d’exploitation en prennent connaissance.</p>
-    </div>
+	<div class="page-intro">
+		<h1 class="page-title">Merci pour votre signalement</h1>
+		<p class="page-subtitle">Votre message a bien été transmis. Les équipes d’exploitation en prennent connaissance.</p>
+	</div>
 
-    <div class="form-panel" style="max-width: 100%;">
-        <p style="margin: 0 0 1rem;">Vous pouvez envoyer un autre signalement si besoin.</p>
-        <div class="stack-actions">
-            <a href="{{ path('app_report_new') }}" class="btn">Nouveau signalement</a>
-            {% if app.user %}
-                <a href="{{ path('app_report_index') }}" class="btn btn--secondary">Retour gestion</a>
-            {% endif %}
-        </div>
-    </div>
+	<div class="form-panel" style="max-width: 100%;">
+		<p style="margin: 0 0 1rem;">Vous pouvez envoyer un autre signalement si besoin.</p>
+		<div class="stack-actions">
+			<a href="{{ path('app_report_new') }}" class="btn">Nouveau signalement</a>
+			{% if app.user %}
+				<a href="{{ path('app_report_index') }}" class="btn btn--secondary">Retour gestion</a>
+			{% endif %}
+		</div>
+	</div>
 {% endblock %}

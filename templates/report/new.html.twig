@@ -1,817 +1,893 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Signalement voyageur{% endblock %}
+{% block title %}Signalement voyageur
+{% endblock %}
 
 {% block stylesheets %}
-    {{ parent() }}
-    <style>
-        .report-page {
-            --report-green: #0d4a35;
-            --report-cream: #f4f2eb;
-            --report-line: #e8e4da;
-            --report-muted: #7a8078;
-            width: 100%;
-            max-width: 100%;
-        }
-
-        .report-page .page-intro {
-            max-width: 36rem;
-            margin-left: auto;
-            margin-right: auto;
-            text-align: center;
-        }
-
-        .report-page .form-panel.report-submission-panel {
-            margin-left: auto;
-            margin-right: auto;
-            width: 100%;
-            max-width: 40rem;
-        }
-
-        .visually-hidden {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border: 0;
-        }
-
-        .report-bus-identify-block {
-            margin-bottom: 1.5rem;
-        }
-
-        .report-bus-identify-block > .report-section-title {
-            margin-top: 0;
-        }
-
-        .report-bus-identify-block.is-collapsed > .report-section-title {
-            color: var(--report-green);
-        }
-
-        .report-bus-identify-block.is-collapsed > .report-section-title::after {
-            background: rgba(13, 74, 53, 0.28);
-        }
-
-        .report-bus-identify-done {
-            display: none;
-            align-items: flex-start;
-            gap: 0.75rem;
-            padding: 0.85rem 1rem;
-            background: linear-gradient(135deg, rgba(13, 74, 53, 0.08) 0%, rgba(13, 74, 53, 0.04) 100%);
-            border: 1.5px solid rgba(13, 74, 53, 0.35);
-            border-radius: 12px;
-            box-shadow: 0 2px 12px rgba(13, 74, 53, 0.06);
-            margin-bottom: 0;
-            animation: report-slide-in 0.28s ease;
-        }
-
-        .report-bus-identify-block.is-collapsed .report-bus-identify-done {
-            display: flex;
-        }
-
-        .report-bus-identify-block.is-collapsed .report-bus-identify-tabs {
-            display: none;
-        }
-
-        .report-bus-identify-done__icon {
-            flex-shrink: 0;
-            width: 1.75rem;
-            height: 1.75rem;
-            border-radius: 50%;
-            background: var(--report-green);
-            color: #fff;
-            font-size: 1rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1;
-        }
-
-        .report-bus-identify-done__text {
-            flex: 1;
-            margin: 0;
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #1a1f1c;
-            line-height: 1.45;
-            min-width: 0;
-        }
-
-        .report-bus-identify-done__edit {
-            flex-shrink: 0;
-            align-self: center;
-            padding: 0.4rem 0.75rem;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--report-green);
-            background: #fff;
-            border: 1px solid rgba(13, 74, 53, 0.4);
-            border-radius: 8px;
-            cursor: pointer;
-            font-family: inherit;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .report-bus-identify-done__edit:hover {
-            background: var(--report-cream);
-        }
-
-        .report-bus-identify-tabs {
-            background: #fff;
-            border-radius: 14px;
-            box-shadow: 0 4px 24px rgba(13, 74, 53, 0.1);
-            border: 1px solid var(--report-line);
-            overflow: hidden;
-        }
-
-        .report-tabs-nav {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            border-bottom: 1.5px solid var(--report-line);
-        }
-
-        .report-tab-btn {
-            background: none;
-            border: none;
-            border-bottom: 2.5px solid transparent;
-            margin-bottom: -1.5px;
-            padding: 1rem 0.5rem 0.875rem;
-            font-family: inherit;
-            font-size: 0.8rem;
-            font-weight: 500;
-            color: var(--report-muted);
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.3rem;
-            transition: color 0.18s, border-color 0.18s, background 0.18s;
-            position: relative;
-        }
-
-        .report-tab-btn__icon {
-            font-size: 1.2rem;
-            line-height: 1;
-        }
-
-        .report-tab-btn.is-active {
-            color: var(--report-green);
-            border-bottom-color: var(--report-green);
-            font-weight: 600;
-        }
-
-        .report-tab-btn:hover:not(.is-active) {
-            color: var(--report-green);
-            background: var(--report-cream);
-        }
-
-        .report-tab-badge {
-            position: absolute;
-            top: 0.4rem;
-            right: 0.4rem;
-            background: #c9a227;
-            color: #4a3800;
-            font-size: 0.55rem;
-            font-weight: 700;
-            padding: 1px 5px;
-            border-radius: 20px;
-            letter-spacing: 0.03em;
-        }
-
-        .report-tab-panel {
-            display: none;
-            padding: 1.25rem 1.25rem 1.5rem;
-        }
-
-        .report-tab-panel.is-active {
-            display: block;
-        }
-
-        .report-section-title {
-            font-size: 0.7rem;
-            font-weight: 700;
-            color: var(--report-green);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin: 1.5rem 0 0.875rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .report-section-title::after {
-            content: "";
-            flex: 1;
-            height: 1px;
-            background: var(--report-line);
-        }
-
-        .report-bus-card {
-            margin-bottom: 0;
-        }
-
-        .report-field {
-            margin-bottom: 0.875rem;
-        }
-
-        .report-field__label {
-            display: block;
-            font-size: 0.82rem;
-            font-weight: 500;
-            color: #2a2f2c;
-            margin-bottom: 0.35rem;
-        }
-
-        .report-field__input,
-        .report-field__textarea {
-            width: 100%;
-            padding: 0.7rem 0.875rem;
-            border: 1.5px solid #d8d4ca;
-            border-radius: 8px;
-            font-family: inherit;
-            font-size: 0.9375rem;
-            color: #1a1f1c;
-            background: #fff;
-            outline: none;
-            transition: border-color 0.18s, box-shadow 0.18s;
-        }
-
-        .report-field__textarea {
-            resize: vertical;
-            min-height: 110px;
-            line-height: 1.55;
-        }
-
-        .report-field__input:focus,
-        .report-field__textarea:focus {
-            border-color: var(--report-green);
-            box-shadow: 0 0 0 3px rgba(13, 74, 53, 0.1);
-        }
-
-        .report-field .form-help,
-        .report-bus-card .form-help {
-            margin-top: 0.35rem;
-            font-size: 0.78rem;
-            color: var(--report-muted);
-        }
-
-        .report-description-primary .report-field--schedule {
-            margin-bottom: 1rem;
-        }
-
-        .report-description-primary .report-field--description-body {
-            margin-bottom: 0;
-        }
-
-        .report-description-primary__field-head {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 0.5rem 0.75rem;
-            margin-bottom: 0.4rem;
-        }
-
-        .report-description-primary__sublabel {
-            flex: 1;
-            min-width: 8rem;
-            margin-bottom: 0 !important;
-        }
-
-        .report-btn-speech {
-            flex-shrink: 0;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-            padding: 0.35rem 0.7rem;
-            font-family: inherit;
-            font-size: 0.72rem;
-            font-weight: 600;
-            color: var(--report-green);
-            background: #fff;
-            border: 1.5px solid rgba(13, 74, 53, 0.45);
-            border-radius: 999px;
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-            transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-            /* Clics utilisables même si le bloc .report-locked-after-bus est en pointer-events: none */
-            pointer-events: auto;
-            position: relative;
-            z-index: 1;
-        }
-
-        .report-btn-speech:hover {
-            background: rgba(13, 74, 53, 0.07);
-        }
-
-        .report-btn-speech--active {
-            background: rgba(180, 35, 24, 0.12);
-            border-color: rgba(180, 35, 24, 0.55);
-            color: #8f1c13;
-        }
-
-        .report-btn-speech__icon {
-            font-size: 0.95rem;
-            line-height: 1;
-        }
-
-        .report-btn-speech__text {
-            white-space: nowrap;
-        }
-
-        .report-btn-speech__status {
-            margin: 0 0 0.35rem;
-            font-size: 0.72rem;
-            line-height: 1.4;
-            color: #b42318;
-            min-height: 0;
-        }
-
-        .report-btn-speech__status:empty {
-            display: none;
-        }
-
-        .report-field__label--schedule {
-            font-size: 0.78rem;
-            color: var(--report-muted);
-            font-weight: 600;
-        }
-
-        .report-field__input--schedule {
-            max-width: 22rem;
-        }
-
-        .report-description-primary {
-            margin: 1.1rem 0 1.65rem;
-            padding: 1.15rem 1.15rem 1.2rem;
-            background: linear-gradient(
-                155deg,
-                rgba(13, 74, 53, 0.07) 0%,
-                rgba(201, 162, 39, 0.09) 100%
-            );
-            border: 1.5px solid rgba(13, 74, 53, 0.3);
-            border-radius: 12px;
-            box-shadow: 0 4px 22px rgba(13, 74, 53, 0.08);
-        }
-
-        .report-description-primary__label {
-            display: block;
-            font-size: 1.06rem;
-            font-weight: 700;
-            color: var(--report-green);
-            margin: 0 0 0.3rem;
-            letter-spacing: -0.015em;
-            line-height: 1.25;
-        }
-
-        .report-description-primary__lead {
-            margin: 0 0 0.8rem;
-            font-size: 0.82rem;
-            color: #4a504c;
-            line-height: 1.48;
-        }
-
-        .report-field__textarea--hero {
-            min-height: 10rem;
-            font-size: 1rem;
-            line-height: 1.55;
-            border-width: 2px;
-            border-color: rgba(13, 74, 53, 0.38);
-        }
-
-        .report-contact-optional {
-            margin: 0 0 1rem;
-            padding: 0.85rem 1rem 1rem;
-            background: rgba(122, 128, 120, 0.07);
-            border: 1px dashed rgba(90, 96, 92, 0.4);
-            border-radius: 10px;
-            color: #525854;
-        }
-
-        .report-contact-optional__head {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 0.35rem 0.6rem;
-            margin-bottom: 0.4rem;
-        }
-
-        .report-contact-optional__title {
-            font-size: 0.66rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--report-muted);
-        }
-
-        .report-contact-optional__badge {
-            font-size: 0.6rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            padding: 0.12rem 0.5rem;
-            border-radius: 999px;
-            background: rgba(122, 128, 120, 0.22);
-            color: #4d524f;
-        }
-
-        .report-contact-optional__text {
-            margin: 0 0 0.75rem;
-            font-size: 0.74rem;
-            line-height: 1.52;
-            color: #4d524f;
-        }
-
-        .report-contact-optional__fields {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 0.65rem 1rem;
-        }
-
-        @media (min-width: 520px) {
-            .report-contact-optional__fields {
-                grid-template-columns: 1fr 1fr;
-                align-items: start;
-            }
-        }
-
-        .report-field--contact {
-            margin-bottom: 0;
-            min-width: 0;
-        }
-
-        .report-field__label--subtle {
-            font-size: 0.72rem;
-            color: #6a706d;
-            font-weight: 500;
-        }
-
-        .report-field__input--contact {
-            padding: 0.55rem 0.75rem;
-            font-size: 0.875rem;
-            background: #fafaf8;
-            border-color: rgba(110, 116, 112, 0.4);
-        }
-
-        .report-field ul,
-        .report-submission-form > ul {
-            margin: 0.35rem 0 0;
-            padding-left: 1.1rem;
-            color: #b42318;
-            font-size: 0.85rem;
-        }
-
-        .report-btn-find {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            background: var(--report-green);
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            font-family: inherit;
-            font-size: 0.9375rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            transition: background 0.18s, transform 0.12s;
-            margin-top: 0.35rem;
-        }
-
-        .report-btn-find--secondary {
-            background: #fff;
-            color: var(--report-green);
-            border: 1.5px solid var(--report-green);
-            margin-top: 1rem;
-        }
-
-        .report-btn-find--secondary:hover {
-            background: var(--report-cream);
-        }
-
-        .report-btn-find:not(.report-btn-find--secondary):hover {
-            background: #0a3d2b;
-        }
-
-        .report-btn-find--secondary:hover {
-            background: var(--report-cream);
-            color: var(--report-green);
-        }
-
-        .report-btn-find:active {
-            transform: scale(0.99);
-        }
-
-        .report-bus-status {
-            margin: 0.75rem 0 0;
-            font-size: 0.875rem;
-            min-height: 0;
-            border-radius: 8px;
-            padding: 0;
-            transition: padding 0.2s, background 0.2s;
-        }
-
-        .report-bus-status.bus-finder__message--info {
-            display: block;
-            margin-top: 0.75rem;
-            padding: 0.5rem 0;
-            font-size: 0.875rem;
-            color: var(--report-muted);
-        }
-
-        .report-bus-status.is-empty:not(.bus-finder__message--error):not(.bus-finder__message--success):not(.bus-finder__message--info) {
-            display: none;
-        }
-
-        .report-bus-status.bus-finder__message--success {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.875rem 1rem;
-            background: var(--report-green);
-            color: #fff;
-            margin-top: 0.75rem;
-            animation: report-slide-in 0.22s ease;
-        }
-
-        .report-bus-status.bus-finder__message--success::before {
-            content: "🚌";
-            font-size: 1.25rem;
-            flex-shrink: 0;
-        }
-
-        .report-bus-status.bus-finder__message--error {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.4rem;
-            padding: 0.75rem 0.875rem;
-            background: #fff1f0;
-            border: 1.5px solid #ffc9c4;
-            color: #b42318;
-            margin-top: 0.5rem;
-        }
-
-        .report-bus-status.bus-finder__message--error::before {
-            content: "⚠️";
-            flex-shrink: 0;
-        }
-
-        @keyframes report-slide-in {
-            from {
-                opacity: 0;
-                transform: translateY(-6px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .report-submission-form:not(.report-submission-form--bus-resolved) .report-locked-after-bus {
-            opacity: 0.38;
-            pointer-events: none;
-            filter: grayscale(0.08);
-            transition: opacity 0.28s, filter 0.28s;
-        }
-
-        .report-submission-form--bus-resolved .report-locked-after-bus {
-            opacity: 1;
-            pointer-events: auto;
-            filter: none;
-        }
-
-        .report-stack-actions {
-            margin-top: 1.25rem;
-        }
-
-        .report-btn-submit {
-            width: 100%;
-            padding: 0.875rem 1rem;
-            background: #b42318;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            font-family: inherit;
-            font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            transition: background 0.18s, transform 0.12s;
-            letter-spacing: 0.01em;
-        }
-
-        .report-btn-submit:hover {
-            background: #9a1e14;
-        }
-
-        .report-btn-submit:active {
-            transform: scale(0.99);
-        }
-
-        .report-after-form {
-            margin-top: 1.25rem;
-            text-align: center;
-        }
-
-        .report-qr-lead {
-            font-size: 0.9rem;
-            color: #2a2f2c;
-            line-height: 1.5;
-            margin: 0 0 0.65rem;
-        }
-
-        .report-qr-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 0.65rem;
-            margin-bottom: 0;
-        }
-
-        @media (min-width: 420px) {
-            .report-qr-actions {
-                flex-direction: row;
-            }
-        }
-
-        .report-btn-camera {
-            flex: 1;
-            min-height: 3rem;
-            padding: 0.75rem 1rem;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            font-family: inherit;
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: #fff;
-            background: var(--report-green);
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-        }
-
-        .report-btn-camera--secondary {
-            background: #fff;
-            color: var(--report-green);
-            border: 1.5px solid var(--report-green);
-        }
-
-        .report-btn-camera:hover {
-            filter: brightness(1.05);
-        }
-
-        .report-qr-feedback {
-            min-height: 1.25rem;
-            margin: 0 0 0.75rem;
-            font-size: 0.85rem;
-            color: var(--report-muted);
-        }
-
-        .report-qr-feedback.is-error {
-            color: #b42318;
-            font-weight: 500;
-        }
-
-        .report-qr-feedback.is-success {
-            color: var(--report-green);
-            font-weight: 500;
-        }
-
-        .report-call-inline {
-            text-align: center;
-            padding: 0.25rem 0;
-        }
-
-        .report-call-lead {
-            margin: 0 0 0.5rem;
-            font-size: 0.95rem;
-            color: #1a1f1c;
-        }
-
-        .report-call-hours-inline {
-            margin: 0 0 1rem;
-            font-size: 0.8rem;
-            color: var(--report-muted);
-            line-height: 1.45;
-        }
-
-        .report-btn-call {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.875rem 2rem;
-            background: #1d7a4a;
-            color: #fff !important;
-            border: none;
-            border-radius: 8px;
-            font-family: inherit;
-            font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            text-decoration: none;
-            transition: background 0.18s;
-        }
-
-        .report-btn-call--inline {
-            padding: 0.65rem 1.5rem;
-            font-size: 0.95rem;
-        }
-
-        .report-btn-call:hover {
-            background: #165f3a;
-            color: #fff !important;
-        }
-
-        @media (min-width: 480px) {
-            .report-tab-btn {
-                font-size: 0.85rem;
-            }
-        }
-
-        @media (min-width: 640px) {
-            .report-tab-panel {
-                padding: 1.5rem 1.75rem 1.75rem;
-            }
-        }
-    </style>
+	{{ parent() }}
+	<style>
+		.report-page {
+			--report-green: #0d4a35;
+			--report-cream: #f4f2eb;
+			--report-line: #e8e4da;
+			--report-muted: #7a8078;
+			width: 100%;
+			max-width: 100%;
+		}
+
+		.report-page .page-intro {
+			max-width: 36rem;
+			margin-left: auto;
+			margin-right: auto;
+			text-align: center;
+		}
+
+		.report-page .form-panel.report-submission-panel {
+			margin-left: auto;
+			margin-right: auto;
+			width: 100%;
+			max-width: 40rem;
+		}
+
+		.visually-hidden {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			padding: 0;
+			margin: -1px;
+			overflow: hidden;
+			clip: rect(0, 0, 0, 0);
+			white-space: nowrap;
+			border: 0;
+		}
+
+		.report-bus-identify-block {
+			margin-bottom: 1.5rem;
+		}
+
+		.report-bus-identify-block > .report-section-title {
+			margin-top: 0;
+		}
+
+		.report-bus-identify-block.is-collapsed > .report-section-title {
+			color: var(--report-green);
+		}
+
+		.report-bus-identify-block.is-collapsed > .report-section-title::after {
+			background: rgba(13, 74, 53, 0.28);
+		}
+
+		.report-bus-identify-done {
+			display: none;
+			align-items: flex-start;
+			gap: 0.75rem;
+			padding: 0.85rem 1rem;
+			background: linear-gradient(135deg, rgba(13, 74, 53, 0.08) 0%, rgba(13, 74, 53, 0.04) 100%);
+			border: 1.5px solid rgba(13, 74, 53, 0.35);
+			border-radius: 12px;
+			box-shadow: 0 2px 12px rgba(13, 74, 53, 0.06);
+			margin-bottom: 0;
+			animation: report-slide-in 0.28s ease;
+		}
+
+		.report-bus-identify-block.is-collapsed .report-bus-identify-done {
+			display: flex;
+		}
+
+		.report-bus-identify-block.is-collapsed .report-bus-identify-tabs {
+			display: none;
+		}
+
+		.report-bus-identify-done__icon {
+			flex-shrink: 0;
+			width: 1.75rem;
+			height: 1.75rem;
+			border-radius: 50%;
+			background: var(--report-green);
+			color: #fff;
+			font-size: 1rem;
+			font-weight: 700;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			line-height: 1;
+		}
+
+		.report-bus-identify-done__text {
+			flex: 1;
+			margin: 0;
+			font-size: 0.9rem;
+			font-weight: 600;
+			color: #1a1f1c;
+			line-height: 1.45;
+			min-width: 0;
+		}
+
+		.report-bus-identify-done__edit {
+			flex-shrink: 0;
+			align-self: center;
+			padding: 0.4rem 0.75rem;
+			font-size: 0.8rem;
+			font-weight: 600;
+			color: var(--report-green);
+			background: #fff;
+			border: 1px solid rgba(13, 74, 53, 0.4);
+			border-radius: 8px;
+			cursor: pointer;
+			font-family: inherit;
+			-webkit-tap-highlight-color: transparent;
+		}
+
+		.report-bus-identify-done__edit:hover {
+			background: var(--report-cream);
+		}
+
+		.report-bus-identify-tabs {
+			background: #fff;
+			border-radius: 14px;
+			box-shadow: 0 4px 24px rgba(13, 74, 53, 0.1);
+			border: 1px solid var(--report-line);
+			overflow: hidden;
+		}
+
+		.report-tabs-nav {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			border-bottom: 1.5px solid var(--report-line);
+		}
+
+		.report-tab-btn {
+			background: none;
+			border: none;
+			border-bottom: 2.5px solid transparent;
+			margin-bottom: -1.5px;
+			padding: 1rem 0.5rem 0.875rem;
+			font-family: inherit;
+			font-size: 0.8rem;
+			font-weight: 500;
+			color: var(--report-muted);
+			cursor: pointer;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 0.3rem;
+			transition: color 0.18s, border-color 0.18s, background 0.18s;
+			position: relative;
+		}
+
+		.report-tab-btn__icon {
+			font-size: 1.2rem;
+			line-height: 1;
+		}
+
+		.report-tab-btn.is-active {
+			color: var(--report-green);
+			border-bottom-color: var(--report-green);
+			font-weight: 600;
+		}
+
+		.report-tab-btn:hover:not(.is-active) {
+			color: var(--report-green);
+			background: var(--report-cream);
+		}
+
+		.report-tab-badge {
+			position: absolute;
+			top: 0.4rem;
+			right: 0.4rem;
+			background: #c9a227;
+			color: #4a3800;
+			font-size: 0.55rem;
+			font-weight: 700;
+			padding: 1px 5px;
+			border-radius: 20px;
+			letter-spacing: 0.03em;
+		}
+
+		.report-tab-panel {
+			display: none;
+			padding: 1.25rem 1.25rem 1.5rem;
+		}
+
+		.report-tab-panel.is-active {
+			display: block;
+		}
+
+		.report-section-title {
+			font-size: 0.7rem;
+			font-weight: 700;
+			color: var(--report-green);
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+			margin: 1.5rem 0 0.875rem;
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+		}
+
+		.report-section-title::after {
+			content: "";
+			flex: 1;
+			height: 1px;
+			background: var(--report-line);
+		}
+
+		.report-bus-card {
+			margin-bottom: 0;
+		}
+
+		.report-field {
+			margin-bottom: 0.875rem;
+		}
+
+		.report-field__label {
+			display: block;
+			font-size: 0.82rem;
+			font-weight: 500;
+			color: #2a2f2c;
+			margin-bottom: 0.35rem;
+		}
+
+		.report-field__input,
+		.report-field__textarea {
+			width: 100%;
+			padding: 0.7rem 0.875rem;
+			border: 1.5px solid #d8d4ca;
+			border-radius: 8px;
+			font-family: inherit;
+			font-size: 0.9375rem;
+			color: #1a1f1c;
+			background: #fff;
+			outline: none;
+			transition: border-color 0.18s, box-shadow 0.18s;
+		}
+
+		.report-field__textarea {
+			resize: vertical;
+			min-height: 110px;
+			line-height: 1.55;
+		}
+
+		.report-field__input:focus,
+		.report-field__textarea:focus {
+			border-color: var(--report-green);
+			box-shadow: 0 0 0 3px rgba(13, 74, 53, 0.1);
+		}
+
+		/* Combobox transit (ligne / direction / arrêt) */
+		.report-field--combobox {
+			position: relative;
+			z-index: 1;
+		}
+
+		.report-field--combobox:has(.report-combobox--open) {
+			z-index: 25;
+		}
+
+		.report-combobox {
+			position: relative;
+		}
+
+		.report-combobox__menu {
+			position: absolute;
+			left: 0;
+			right: 0;
+			top: calc(100% + 3px);
+			max-height: 13.5rem;
+			overflow-y: auto;
+			margin: 0;
+			padding: 0.3rem 0;
+			background: #fff;
+			border: 1.5px solid #d8d4ca;
+			border-radius: 8px;
+			box-shadow: 0 10px 32px rgba(13, 74, 53, 0.16);
+			z-index: 40;
+		}
+
+		.report-combobox__menu[hidden] {
+			display: none !important;
+		}
+
+		.report-combobox__option {
+			display: flex;
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 0.12rem;
+			width: 100%;
+			margin: 0;
+			padding: 0.55rem 0.9rem;
+			border: none;
+			background: transparent;
+			font-family: inherit;
+			font-size: 0.9rem;
+			color: #1a1f1c;
+			text-align: left;
+			cursor: pointer;
+			transition: background 0.12s ease;
+		}
+
+		.report-combobox__option:hover,
+		.report-combobox__option.is-active {
+			background: rgba(13, 74, 53, 0.1);
+		}
+
+		.report-combobox__option-value {
+			font-weight: 600;
+		}
+
+		.report-combobox__option-label {
+			font-size: 0.78rem;
+			color: var(--report-muted);
+			font-weight: 500;
+			line-height: 1.35;
+		}
+
+		.report-combobox__status {
+			padding: 0.65rem 0.9rem;
+			font-size: 0.82rem;
+			color: var(--report-muted);
+			line-height: 1.4;
+		}
+
+		.report-field .form-help,
+		.report-bus-card .form-help {
+			margin-top: 0.35rem;
+			font-size: 0.78rem;
+			color: var(--report-muted);
+		}
+
+		.report-description-primary .report-field--schedule {
+			margin-bottom: 1rem;
+		}
+
+		.report-description-primary .report-field--description-body {
+			margin-bottom: 0;
+		}
+
+		.report-description-primary__field-head {
+			display: flex;
+			align-items: flex-start;
+			justify-content: space-between;
+			flex-wrap: wrap;
+			gap: 0.5rem 0.75rem;
+			margin-bottom: 0.4rem;
+			/* Permet les clics sur le bouton Dicter même quand le bloc parent est verrouillé */
+			pointer-events: auto;
+			position: relative;
+			z-index: 2;
+		}
+
+		.report-description-primary__sublabel {
+			flex: 1;
+			min-width: 8rem;
+			margin-bottom: 0 !important;
+		}
+
+		.report-btn-speech {
+			flex-shrink: 0;
+			display: inline-flex;
+			align-items: center;
+			gap: 0.35rem;
+			padding: 0.35rem 0.7rem;
+			font-family: inherit;
+			font-size: 0.72rem;
+			font-weight: 600;
+			color: var(--report-green);
+			background: #fff;
+			border: 1.5px solid rgba(13, 74, 53, 0.45);
+			border-radius: 999px;
+			cursor: pointer;
+			-webkit-tap-highlight-color: transparent;
+			transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+			/* Clics utilisables même si le bloc .report-locked-after-bus est en pointer-events: none */
+			pointer-events: auto;
+			position: relative;
+			z-index: 1;
+		}
+
+		.report-btn-speech:hover {
+			background: rgba(13, 74, 53, 0.07);
+		}
+
+		.report-btn-speech--active {
+			background: rgba(180, 35, 24, 0.12);
+			border-color: rgba(180, 35, 24, 0.55);
+			color: #8f1c13;
+		}
+
+		.report-btn-speech__icon {
+			font-size: 0.95rem;
+			line-height: 1;
+		}
+
+		.report-btn-speech__text {
+			white-space: nowrap;
+		}
+
+		.report-btn-speech__status {
+			margin: 0 0 0.35rem;
+			font-size: 0.72rem;
+			line-height: 1.4;
+			color: #b42318;
+			min-height: 0;
+		}
+
+		.report-btn-speech__status:empty {
+			display: none;
+		}
+
+		.report-field__label--schedule {
+			font-size: 0.78rem;
+			color: var(--report-muted);
+			font-weight: 600;
+		}
+
+		.report-field__input--schedule {
+			max-width: 22rem;
+		}
+
+		.report-description-primary {
+			margin: 1.1rem 0 1.65rem;
+			padding: 1.15rem 1.15rem 1.2rem;
+			background: linear-gradient(155deg, rgba(13, 74, 53, 0.07) 0%, rgba(201, 162, 39, 0.09) 100%);
+			border: 1.5px solid rgba(13, 74, 53, 0.3);
+			border-radius: 12px;
+			box-shadow: 0 4px 22px rgba(13, 74, 53, 0.08);
+		}
+
+		.report-description-primary__label {
+			display: block;
+			font-size: 1.06rem;
+			font-weight: 700;
+			color: var(--report-green);
+			margin: 0 0 0.3rem;
+			letter-spacing: -0.015em;
+			line-height: 1.25;
+		}
+
+		.report-description-primary__lead {
+			margin: 0 0 0.8rem;
+			font-size: 0.82rem;
+			color: #4a504c;
+			line-height: 1.48;
+		}
+
+		.report-field__textarea--hero {
+			min-height: 10rem;
+			font-size: 1rem;
+			line-height: 1.55;
+			border-width: 2px;
+			border-color: rgba(13, 74, 53, 0.38);
+		}
+
+		.report-contact-optional {
+			margin: 0 0 1rem;
+			padding: 0.85rem 1rem 1rem;
+			background: rgba(122, 128, 120, 0.07);
+			border: 1px dashed rgba(90, 96, 92, 0.4);
+			border-radius: 10px;
+			color: #525854;
+		}
+
+		.report-contact-optional__head {
+			display: flex;
+			align-items: center;
+			flex-wrap: wrap;
+			gap: 0.35rem 0.6rem;
+			margin-bottom: 0.4rem;
+		}
+
+		.report-contact-optional__title {
+			font-size: 0.66rem;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+			color: var(--report-muted);
+		}
+
+		.report-contact-optional__badge {
+			font-size: 0.6rem;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: 0.06em;
+			padding: 0.12rem 0.5rem;
+			border-radius: 999px;
+			background: rgba(122, 128, 120, 0.22);
+			color: #4d524f;
+		}
+
+		.report-contact-optional__text {
+			margin: 0 0 0.75rem;
+			font-size: 0.74rem;
+			line-height: 1.52;
+			color: #4d524f;
+		}
+
+		.report-contact-optional__fields {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: 0.65rem 1rem;
+		}
+
+		@media(min-width: 520px) {
+			.report-contact-optional__fields {
+				grid-template-columns: 1fr 1fr;
+				align-items: start;
+			}
+		}
+
+		.report-field--contact {
+			margin-bottom: 0;
+			min-width: 0;
+		}
+
+		.report-field__label--subtle {
+			font-size: 0.72rem;
+			color: #6a706d;
+			font-weight: 500;
+		}
+
+		.report-field__input--contact {
+			padding: 0.55rem 0.75rem;
+			font-size: 0.875rem;
+			background: #fafaf8;
+			border-color: rgba(110, 116, 112, 0.4);
+		}
+
+		.report-field ul,
+		.report-submission-form > ul {
+			margin: 0.35rem 0 0;
+			padding-left: 1.1rem;
+			color: #b42318;
+			font-size: 0.85rem;
+		}
+
+		.report-btn-find {
+			width: 100%;
+			padding: 0.75rem 1rem;
+			background: var(--report-green);
+			color: #fff;
+			border: none;
+			border-radius: 8px;
+			font-family: inherit;
+			font-size: 0.9375rem;
+			font-weight: 600;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 0.5rem;
+			transition: background 0.18s, transform 0.12s;
+			margin-top: 0.35rem;
+		}
+
+		.report-btn-find--secondary {
+			background: #fff;
+			color: var(--report-green);
+			border: 1.5px solid var(--report-green);
+			margin-top: 1rem;
+		}
+
+		.report-btn-find--secondary:hover {
+			background: var(--report-cream);
+		}
+
+		.report-btn-find:not(.report-btn-find--secondary):hover {
+			background: #0a3d2b;
+		}
+
+		.report-btn-find--secondary:hover {
+			background: var(--report-cream);
+			color: var(--report-green);
+		}
+
+		.report-btn-find:active {
+			transform: scale(0.99);
+		}
+
+		.report-bus-status {
+			margin: 0.75rem 0 0;
+			font-size: 0.875rem;
+			min-height: 0;
+			border-radius: 8px;
+			padding: 0;
+			transition: padding 0.2s, background 0.2s;
+		}
+
+		.report-bus-status.bus-finder__message--info {
+			display: block;
+			margin-top: 0.75rem;
+			padding: 0.5rem 0;
+			font-size: 0.875rem;
+			color: var(--report-muted);
+		}
+
+		.report-bus-status.is-empty:not(.bus-finder__message--error):not(.bus-finder__message--success):not(.bus-finder__message--info) {
+			display: none;
+		}
+
+		.report-bus-status.bus-finder__message--success {
+			display: flex;
+			align-items: center;
+			gap: 0.75rem;
+			padding: 0.875rem 1rem;
+			background: var(--report-green);
+			color: #fff;
+			margin-top: 0.75rem;
+			animation: report-slide-in 0.22s ease;
+		}
+
+		.report-bus-status.bus-finder__message--success::before {
+			content: "🚌";
+			font-size: 1.25rem;
+			flex-shrink: 0;
+		}
+
+		.report-bus-status.bus-finder__message--error {
+			display: flex;
+			align-items: flex-start;
+			gap: 0.4rem;
+			padding: 0.75rem 0.875rem;
+			background: #fff1f0;
+			border: 1.5px solid #ffc9c4;
+			color: #b42318;
+			margin-top: 0.5rem;
+		}
+
+		.report-bus-status.bus-finder__message--error::before {
+			content: "⚠️";
+			flex-shrink: 0;
+		}
+
+		@keyframes report-slide-in {
+			from {
+				opacity: 0;
+				transform: translateY(-6px);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		.report-submission-form:not(.report-submission-form--bus-resolved) .report-locked-after-bus {
+			opacity: 0.38;
+			pointer-events: none;
+			filter: grayscale(0.08);
+			transition: opacity 0.28s, filter 0.28s;
+		}
+
+		.report-submission-form--bus-resolved .report-locked-after-bus {
+			opacity: 1;
+			pointer-events: auto;
+			filter: none;
+		}
+
+		.report-stack-actions {
+			margin-top: 1.25rem;
+		}
+
+		.report-btn-submit {
+			width: 100%;
+			padding: 0.875rem 1rem;
+			background: #b42318;
+			color: #fff;
+			border: none;
+			border-radius: 8px;
+			font-family: inherit;
+			font-size: 1rem;
+			font-weight: 700;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 0.5rem;
+			transition: background 0.18s, transform 0.12s;
+			letter-spacing: 0.01em;
+		}
+
+		.report-btn-submit:hover {
+			background: #9a1e14;
+		}
+
+		.report-btn-submit:active {
+			transform: scale(0.99);
+		}
+
+		.report-after-form {
+			margin-top: 1.25rem;
+			text-align: center;
+		}
+
+		.report-qr-lead {
+			font-size: 0.9rem;
+			color: #2a2f2c;
+			line-height: 1.5;
+			margin: 0 0 0.65rem;
+		}
+
+		.report-qr-actions {
+			display: flex;
+			flex-direction: column;
+			gap: 0.65rem;
+			margin-bottom: 0;
+		}
+
+		@media(min-width: 420px) {
+			.report-qr-actions {
+				flex-direction: row;
+			}
+		}
+
+		.report-btn-camera {
+			flex: 1;
+			min-height: 3rem;
+			padding: 0.75rem 1rem;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			gap: 0.5rem;
+			font-family: inherit;
+			font-size: 0.95rem;
+			font-weight: 600;
+			color: #fff;
+			background: var(--report-green);
+			border: none;
+			border-radius: 10px;
+			cursor: pointer;
+			-webkit-tap-highlight-color: transparent;
+			touch-action: manipulation;
+		}
+
+		.report-btn-camera--secondary {
+			background: #fff;
+			color: var(--report-green);
+			border: 1.5px solid var(--report-green);
+		}
+
+		.report-btn-camera:hover {
+			filter: brightness(1.05);
+		}
+
+		.report-qr-feedback {
+			min-height: 1.25rem;
+			margin: 0 0 0.75rem;
+			font-size: 0.85rem;
+			color: var(--report-muted);
+		}
+
+		.report-qr-feedback.is-error {
+			color: #b42318;
+			font-weight: 500;
+		}
+
+		.report-qr-feedback.is-success {
+			color: var(--report-green);
+			font-weight: 500;
+		}
+
+		.report-call-inline {
+			text-align: center;
+			padding: 0.25rem 0;
+		}
+
+		.report-call-lead {
+			margin: 0 0 0.5rem;
+			font-size: 0.95rem;
+			color: #1a1f1c;
+		}
+
+		.report-call-hours-inline {
+			margin: 0 0 1rem;
+			font-size: 0.8rem;
+			color: var(--report-muted);
+			line-height: 1.45;
+		}
+
+		.report-btn-call {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.5rem;
+			padding: 0.875rem 2rem;
+			background: #1d7a4a;
+			color: #fff !important;
+			border: none;
+			border-radius: 8px;
+			font-family: inherit;
+			font-size: 1rem;
+			font-weight: 700;
+			cursor: pointer;
+			text-decoration: none;
+			transition: background 0.18s;
+		}
+
+		.report-btn-call--inline {
+			padding: 0.65rem 1.5rem;
+			font-size: 0.95rem;
+		}
+
+		.report-btn-call:hover {
+			background: #165f3a;
+			color: #fff !important;
+		}
+
+		@media(min-width: 480px) {
+			.report-tab-btn {
+				font-size: 0.85rem;
+			}
+		}
+
+		@media(min-width: 640px) {
+			.report-tab-panel {
+				padding: 1.5rem 1.75rem 1.75rem;
+			}
+		}
+	</style>
 {% endblock %}
 
 {% block body %}
-    <div class="report-page">
-        <div class="page-intro">
-            <h1 class="page-title">Signalement voyageur</h1>
-            <p class="page-subtitle">Décrivez les faits ; notre équipe les traitera. Choisissez comment identifier le bus ci-dessous.</p>
-        </div>
+	<div class="report-page">
+		<div class="page-intro">
+			<h1 class="page-title">Signalement voyageur</h1>
+			<p class="page-subtitle">Décrivez les faits ; notre équipe les traitera. Choisissez comment identifier le bus ci-dessous.</p>
+		</div>
 
-        <div class="form-panel report-submission-panel">
-            {{ include('report/_submission_form.html.twig', {
+		<div class="form-panel report-submission-panel">
+			{{ include('report/_submission_form.html.twig', {
                 button_label: '✉️ Envoyer le signalement',
                 prefilled_bus_id: prefilled_bus_id|default(null),
             }) }}
 
-            {% if app.user %}
-                <div class="report-after-form">
-                    <a href="{{ path('app_report_index') }}" class="btn btn--secondary">Retour à la liste</a>
-                </div>
-            {% endif %}
-        </div>
-    </div>
+			{% if app.user %}
+				<div class="report-after-form">
+					<a href="{{ path('app_report_index') }}" class="btn btn--secondary">Retour à la liste</a>
+				</div>
+			{% endif %}
+		</div>
+	</div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            var root = document.querySelector("[data-report-bus-tabs]");
-            if (!root) {
-                return;
-            }
+	<script>
+		document.addEventListener("DOMContentLoaded", function () {
+var root = document.querySelector("[data-report-bus-tabs]");
+if (! root) {
+return;
+}
 
-            function activateTab(id) {
-                root.querySelectorAll(".report-tab-panel").forEach(function (p) {
-                    p.classList.remove("is-active");
-                });
-                root.querySelectorAll(".report-tab-btn").forEach(function (b) {
-                    b.classList.remove("is-active");
-                    b.setAttribute("aria-selected", "false");
-                });
-                var panel = document.getElementById("report-bus-panel-" + id);
-                var btn = root.querySelector('.report-tab-btn[data-report-bus-tab="' + id + '"]');
-                if (panel) {
-                    panel.classList.add("is-active");
-                }
-                if (btn) {
-                    btn.classList.add("is-active");
-                    btn.setAttribute("aria-selected", "true");
-                }
-            }
+function activateTab(id) {
+root.querySelectorAll(".report-tab-panel").forEach(function (p) {
+p.classList.remove("is-active");
+});
+root.querySelectorAll(".report-tab-btn").forEach(function (b) {
+b.classList.remove("is-active");
+b.setAttribute("aria-selected", "false");
+});
+var panel = document.getElementById("report-bus-panel-" + id);
+var btn = root.querySelector('.report-tab-btn[data-report-bus-tab="' + id + '"]');
+if (panel) {
+panel.classList.add("is-active");
+}
+if (btn) {
+btn.classList.add("is-active");
+btn.setAttribute("aria-selected", "true");
+}
+}
 
-            root.querySelectorAll(".report-tab-btn[data-report-bus-tab]").forEach(function (btn) {
-                btn.addEventListener("click", function () {
-                    activateTab(btn.getAttribute("data-report-bus-tab"));
-                });
-            });
+root.querySelectorAll(".report-tab-btn[data-report-bus-tab]").forEach(function (btn) {
+btn.addEventListener("click", function () {
+activateTab(btn.getAttribute("data-report-bus-tab"));
+});
+});
 
-            root.querySelectorAll("[data-report-bus-go-tab]").forEach(function (el) {
-                el.addEventListener("click", function () {
-                    activateTab(el.getAttribute("data-report-bus-go-tab"));
-                });
-            });
+root.querySelectorAll("[data-report-bus-go-tab]").forEach(function (el) {
+el.addEventListener("click", function () {
+activateTab(el.getAttribute("data-report-bus-go-tab"));
+});
+});
 
-            var params = new URLSearchParams(window.location.search);
-            if (params.get("busId")) {
-                activateTab("qr");
-            }
-        });
-    </script>
+var params = new URLSearchParams(window.location.search);
+if (params.get("busId")) {
+activateTab("qr");
+}
+});
+	</script>
 {% endblock %}

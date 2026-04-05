@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Driver;
 use App\Form\DriverType;
 use App\Repository\DriverRepository;
+use App\Repository\ReportRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -43,10 +44,14 @@ final class DriverController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_driver_show', methods: ['GET'])]
-    public function show(Driver $driver): Response
+    public function show(Driver $driver, ReportRepository $reportRepository): Response
     {
+        $id = (int) $driver->getId();
+
         return $this->render('driver/show.html.twig', [
             'driver' => $driver,
+            'driver_reports' => $reportRepository->findByDriverIdOrdered($id),
+            'driver_report_count' => $reportRepository->countByDriverId($id),
         ]);
     }
 

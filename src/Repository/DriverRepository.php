@@ -16,6 +16,19 @@ class DriverRepository extends ServiceEntityRepository
         parent::__construct($registry, Driver::class);
     }
 
+    public function findRandomId(): ?int
+    {
+        $result = $this->getEntityManager()->getConnection()->executeQuery(
+            'SELECT id FROM driver ORDER BY RANDOM() LIMIT 1'
+        )->fetchOne();
+
+        if (false === $result || null === $result) {
+            return null;
+        }
+
+        return (int) $result;
+    }
+
     //    /**
     //     * @return Driver[] Returns an array of Driver objects
     //     */

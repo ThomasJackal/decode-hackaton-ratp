@@ -1,7 +1,7 @@
 security:
     # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
     password_hashers:
-        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: "auto"
 
     # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
     providers:
@@ -30,9 +30,11 @@ security:
     # Note: Only the *first* matching rule is applied
     access_control:
         - { path: ^/login$, roles: PUBLIC_ACCESS }
+        - { path: ^/logout$, roles: PUBLIC_ACCESS }
         - { path: ^/images/, roles: PUBLIC_ACCESS }
         - { path: ^/report/new$, roles: PUBLIC_ACCESS }
         - { path: ^/report/new/find-bus$, roles: PUBLIC_ACCESS }
+        - { path: ^/report/new/transit-suggest$, roles: PUBLIC_ACCESS }
         - { path: ^/report/thanks$, roles: PUBLIC_ACCESS }
         - { path: ^/, roles: ROLE_USER }
 

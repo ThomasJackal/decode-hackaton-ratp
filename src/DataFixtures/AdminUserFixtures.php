@@ -36,7 +36,7 @@ final class AdminUserFixtures extends Fixture
 
         $user = new User();
         $user->setUsername(self::ADMIN_USERNAME);
-        $user->setRoles(['ROLE_ADMIN', 'ROLE_USER']);
+        $user->setRoles(['ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_USER']);
         $user->setPassword($this->passwordHasher->hashPassword($user, self::ADMIN_PLAIN_PASSWORD));
 
         $manager->persist($user);

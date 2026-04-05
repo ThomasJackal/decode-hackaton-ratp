@@ -16,6 +16,19 @@ class BusRepository extends ServiceEntityRepository
         parent::__construct($registry, Bus::class);
     }
 
+    public function findRandomId(): ?int
+    {
+        $result = $this->getEntityManager()->getConnection()->executeQuery(
+            'SELECT id FROM bus ORDER BY RANDOM() LIMIT 1'
+        )->fetchOne();
+
+        if (false === $result || null === $result) {
+            return null;
+        }
+
+        return (int) $result;
+    }
+
     //    /**
     //     * @return Bus[] Returns an array of Bus objects
     //     */
